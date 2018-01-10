@@ -8,7 +8,4 @@ setup(name='stellar-py',
         author='Kevin Jung',
         author_email='kevin.jung@data61.csiro.au',
         license='Apache 2.0',
-        install_requires=['json',
-                          'requests'
-                          ],
         packages=find_packages())
