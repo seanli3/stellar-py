@@ -119,11 +119,11 @@ class StellarIngestor:
         schema: graph schema
         sources: list of data sources
     """
-    def __init__(self, session, name, schema, sources=[]):
+    def __init__(self, session, name, schema=None, sources=None):
         self.session = session
         self.name = name
-        self.schema = schema
-        self.sources = sources
+        self.schema = {'vertex_classes':[], 'edge_classes':[]} if schema is None else schema
+        self.sources = [] if sources is None else sources
     def add_source(self, path, mapping):
         return StellarIngestor(
             self.session,
@@ -131,9 +131,10 @@ class StellarIngestor:
             self.schema,
             self.sources + [{"path": path, "mapping": mapping}]
         )
-    def ingest(self):
-        data = StellarIngestPayload(self.session.session_id,
+    def get_payload(self):
+        return StellarIngestPayload(self.session.session_id,
                                     self.sources,
                                     self.schema['vertex_classes'],
-                                    self.schema['edge_classes']).to_json()
-        return self.session.post("ingestor/start", data)
+                                    self.schema['edge_classes'])
+    def ingest(self):
+        return self.session.post("ingestor/start", self.get_payload().to_json())
