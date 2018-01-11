@@ -92,4 +92,4 @@ class StellarIngestor:
                                     self.sources,
                                     self.schema['vertex_classes'],
                                     self.schema['edge_classes']).to_json()
-        self.session.post("ingestor/start", data)
+        return self.session.post("ingestor/start", data)
