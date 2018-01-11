@@ -14,6 +14,12 @@ class SessionError(Exception):
         self.message = message
 
 class StellarSession:
+    """Handles communication with Stellar Coordinator.
+
+    Attributes:
+        addr (str): Stellar Coordinator Address
+        session_id (str): Unique Session ID
+    """
     def __init__(self, addr, session_id):
         self.addr = addr
         self.session_id = session_id

@@ -1,11 +1,25 @@
 import json
 
 class VertexClass:
+    """Vertex class for graph schema
+
+    Attributes:
+        name (str): Unique label name
+        properties: dict of {key: type}
+    """
     def __init__(self, name, properties):
         self.name = name
         self.properties = properties
 
 class EdgeClass:
+    """Edge class for graph schema
+
+    Attributes:
+        name (str): Unique label name
+        src_class (str): source vertex class label name
+        dst_class (str): destination vertex class label name
+        properties: dict of {key: type}
+    """
     def __init__(self, name, src_class, dst_class, properties):
         self.name = name
         self.src_class = src_class
@@ -13,12 +27,26 @@ class EdgeClass:
         self.properties = properties
 
 class VertexMapping:
+    """Vertex mapping for data source
+
+    Attributes:
+        vertex_class: class label
+        vertex_id: column name for unique ID
+        properties: dict of {key: column}
+    """
     def __init__(self, vertex_class, vertex_id, properties):
         self.vertex_class = vertex_class
         self.vertex_id = vertex_id
         self.properties = properties
 
 class EdgeMapping:
+    """Edge mapping for data source
+
+    Attributes:
+        edge_class: class label
+        edge_id: column name for unique ID
+        properties: dict of {key: column}
+    """
     def __init__(self, edge_class, src_class, src, dst, properties):
         self.edge_class = edge_class
         self.src_class = src_class
@@ -27,6 +55,14 @@ class EdgeMapping:
         self.properties = properties
 
 class StellarIngestPayload:
+    """Payload object used to start ingestion
+
+    Attributes:
+        session_id: session ID
+        sources: list of sources and their mappings
+        vertex_classes: list of vertex classes
+        edge_classes: list of edge classes
+    """
     def __init__(self, session_id, sources, vertex_classes, edge_classes):
         self.sessionId = session_id
         self.sources = [s['path'] for s in sources]
@@ -75,6 +111,14 @@ class StellarIngestPayload:
         return json.dumps(self.__dict__, indent=4)
 
 class StellarIngestor:
+    """Ingestor object
+
+    Attributes:
+        session: Stellar session
+        name: name of graph
+        schema: graph schema
+        sources: list of data sources
+    """
     def __init__(self, session, name, schema, sources=[]):
         self.session = session
         self.name = name
