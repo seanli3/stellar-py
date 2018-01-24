@@ -1,11 +1,10 @@
 import stellar_py as st
-import json
 import pytest
 
 stellar_addr = "http://localhost:3000"
 graph_name = "test-graph"
 
-testdata = [] # list of tuples of (schema, list of source mappings, expected payload)
+testdata = list()  # list of tuples of (schema, list of source mappings, expected payload)
 testdata.append(
         (None, None, {
             "sessionId": "stellar_py_session",
@@ -23,30 +22,30 @@ testdata.append(
         ({
             'vertex_classes': [
                 st.VertexClass(
-                    name = "Person",
-                    properties = {
+                    name="Person",
+                    properties={
                         "name": "string",
                         "dob": "datetype"
                     }),
                 st.VertexClass(
-                    name = "Location",
-                    properties = {
+                    name="Location",
+                    properties={
                         "address": "string"
                     })
             ],
             'edge_classes': [
                 st.EdgeClass(
-                    name = "Lives-At",
-                    src_class = "Person",
-                    dst_class = "Location",
-                    properties = {
+                    name="Lives-At",
+                    src_class="Person",
+                    dst_class="Location",
+                    properties={
                         "since": "datetype"
                     }),
                 st.EdgeClass(
-                    name = "Last-Messaged",
-                    src_class = "Person",
-                    dst_class = "Person",
-                    properties = {
+                    name="Last-Messaged",
+                    src_class="Person",
+                    dst_class="Person",
+                    properties={
                         "date": "datetype"
                     })
             ]
@@ -57,9 +56,9 @@ testdata.append(
                 "mapping": {
                     "vertices": [
                         st.VertexMapping(
-                            vertex_class = "Person",
-                            vertex_id = "NAME",
-                            properties = {
+                            vertex_class="Person",
+                            vertex_id="NAME",
+                            properties={
                                 "name": "NAME",
                                 "dob": "DOB"
                             })
@@ -71,9 +70,9 @@ testdata.append(
                 "mapping": {
                     "vertices": [
                         st.VertexMapping(
-                            vertex_class = "Location",
-                            vertex_id = "ID",
-                            properties = {
+                            vertex_class="Location",
+                            vertex_id="ID",
+                            properties={
                                 "address": "ADDRESS"
                             })
                     ]
@@ -84,11 +83,11 @@ testdata.append(
                 "mapping": {
                     "edges": [
                         st.EdgeMapping(
-                            edge_class = "Lives-At",
-                            src_class = "Person",
-                            src = "NAME",
-                            dst = "LOCATION",
-                            properties = {
+                            edge_class="Lives-At",
+                            src_class="Person",
+                            src="NAME",
+                            dst="LOCATION",
+                            properties={
                                 "since": "MOVE-IN DATE"
                             })
                     ]
@@ -99,11 +98,11 @@ testdata.append(
                 "mapping": {
                     "edges": [
                         st.EdgeMapping(
-                            edge_class = "Last-Messaged",
-                            src_class = "Person",
-                            src = "NAME",
-                            dst = "LAST-MESSAGED",
-                            properties = {
+                            edge_class="Last-Messaged",
+                            src_class="Person",
+                            src="NAME",
+                            dst="LAST-MESSAGED",
+                            properties={
                                 "date": "MESSAGE DATE"
                             })
                     ]
@@ -222,6 +221,7 @@ testdata.append(
                 ]
             }
         }))
+
 
 @pytest.mark.parametrize("schema,sources,expected", testdata, ids=["empty", "friends&addr"])
 def test_ingestor_payload(schema, sources, expected, monkeypatch):

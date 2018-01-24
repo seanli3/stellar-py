@@ -1,5 +1,6 @@
 import json
 
+
 class VertexClass:
     """Vertex class for graph schema
 
@@ -10,6 +11,7 @@ class VertexClass:
     def __init__(self, name, properties):
         self.name = name
         self.properties = properties
+
 
 class EdgeClass:
     """Edge class for graph schema
@@ -26,6 +28,7 @@ class EdgeClass:
         self.dst_class = dst_class
         self.properties = properties
 
+
 class VertexMapping:
     """Vertex mapping for data source
 
@@ -38,6 +41,7 @@ class VertexMapping:
         self.vertex_class = vertex_class
         self.vertex_id = vertex_id
         self.properties = properties
+
 
 class EdgeMapping:
     """Edge mapping for data source
@@ -53,6 +57,7 @@ class EdgeMapping:
         self.src = src
         self.dst = dst
         self.properties = properties
+
 
 class StellarIngestPayload:
     """Payload object used to start ingestion
@@ -78,37 +83,47 @@ class StellarIngestPayload:
                       for link in
                       self.ems2links(s['path'], s['mapping'].get('edges', []))]
         }
-    def vc2c(self, vertex_class):
+
+    @staticmethod
+    def vc2c(vertex_class):
         return {
             "name": vertex_class.name,
             "props": vertex_class.properties
         }
-    def ec2cl(self, edge_class):
+
+    @staticmethod
+    def ec2cl(edge_class):
         return {
             "name": edge_class.name,
             "source": edge_class.src_class,
             "target": edge_class.dst_class,
             "props": edge_class.properties
         }
-    def vms2nodes(self, source, vms):
-        return [self.vm2node(source, vm) for vm in vms]
-    def ems2links(self, source, ems):
-        return [self.em2link(source, em) for em in ems]
-    def vm2node(self, source, vm):
-        node = {k: {"column": v, "source": source}
-                for k, v in vm.properties.items()}
-        node["@id"] = {"column": vm.vertex_id, "source": source}
-        node["@type"] = vm.vertex_class
-        return node
-    def em2link(self, source, em):
-        link = {k: {"column": v, "source": source}
-                for k, v in em.properties.items()}
-        link["@src"] = {"column": em.src, "source": source}
-        link["@dest"] = {"column": em.dst, "source": source}
-        link["@type"] = {"name": em.edge_class, "source": em.src_class}
-        return link
+
+    @staticmethod
+    def vms2nodes(source, vms):
+        def vm2node(vm):
+            node = {k: {"column": v, "source": source}
+                    for k, v in vm.properties.items()}
+            node["@id"] = {"column": vm.vertex_id, "source": source}
+            node["@type"] = vm.vertex_class
+            return node
+        return [vm2node(vm) for vm in vms]
+
+    @staticmethod
+    def ems2links(source, ems):
+        def em2link(em):
+            link = {k: {"column": v, "source": source}
+                    for k, v in em.properties.items()}
+            link["@src"] = {"column": em.src, "source": source}
+            link["@dest"] = {"column": em.dst, "source": source}
+            link["@type"] = {"name": em.edge_class, "source": em.src_class}
+            return link
+        return [em2link(em) for em in ems]
+
     def to_json(self):
         return json.dumps(self.__dict__, indent=4)
+
 
 class StellarIngestor:
     """Ingestor object
@@ -124,6 +139,7 @@ class StellarIngestor:
         self.name = name
         self.schema = {'vertex_classes':[], 'edge_classes':[]} if schema is None else schema
         self.sources = [] if sources is None else sources
+
     def add_source(self, path, mapping):
         return StellarIngestor(
             self.session,
@@ -131,10 +147,12 @@ class StellarIngestor:
             self.schema,
             self.sources + [{"path": path, "mapping": mapping}]
         )
+
     def get_payload(self):
         return StellarIngestPayload(self.session.session_id,
                                     self.sources,
                                     self.schema['vertex_classes'],
                                     self.schema['edge_classes'])
+
     def ingest(self):
         return self.session.post("ingestor/start", self.get_payload().to_json())
