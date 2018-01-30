@@ -1,4 +1,4 @@
-# stellar-py
+# stellar-py [![Build Status](https://travis-ci.org/data61/stellar-py.svg?branch=devel)](https://travis-ci.org/data61/stellar-py)
 Python client for the Stellar Project
 
 ## Requirements
