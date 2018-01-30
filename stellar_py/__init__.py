@@ -1,2 +1,2 @@
-from .session import connect
-from .ingestion import VertexClass, EdgeClass, VertexMapping, EdgeMapping
+from .session import create_session
+from .ingestion import create_graph_schema, new_data_source

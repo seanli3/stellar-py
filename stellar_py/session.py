@@ -1,5 +1,5 @@
 import requests
-from stellar_py.ingestion import StellarIngestor
+from stellar_py.ingestion import StellarIngestPayload
 from stellar_py.graph import StellarGraph
 
 
@@ -26,9 +26,6 @@ class StellarSession:
         self.addr = addr
         self.session_id = session_id
 
-    def create_ingestor(self, name, schema):
-        return StellarIngestor(self, name, schema)
-
     def post(self, endpoint, data):
         url = '/'.join([self.addr.strip('/'), endpoint])
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
@@ -38,6 +35,10 @@ class StellarSession:
         else:
             raise SessionError(r.status_code, r.reason)
 
+    def run_ingestor(self, schema, sources):
+        payload = StellarIngestPayload(self.session_id, schema, sources).to_json()
+        self.post("ingestor/start", payload)
 
-def connect(addr, session_id="stellar_py_session"):
-    return StellarSession(addr, session_id)
+
+def create_session(url, session_id="stellar_py_session"):
+    return StellarSession(url, session_id)

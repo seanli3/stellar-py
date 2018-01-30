@@ -1,6 +1,16 @@
 import json
 
 
+def validate_props(schema_props, mapping_props):
+    if not mapping_props:
+        return mapping_props
+    schema_props_keys = set(schema_props.keys())
+    mapping_props_keys = set(mapping_props.keys())
+    if len(mapping_props_keys - schema_props_keys.intersection(mapping_props_keys)) > 0:
+        raise KeyError("invalid properties")
+    return mapping_props
+
+
 class VertexClass:
     """Vertex class for graph schema
 
@@ -10,7 +20,10 @@ class VertexClass:
     """
     def __init__(self, name, properties):
         self.name = name
-        self.properties = properties
+        self.properties = properties or {}
+
+    def create_mapping(self, vertex_id, properties=None):
+        return VertexMapping(self.name, vertex_id, validate_props(self.properties, properties))
 
 
 class EdgeClass:
@@ -26,7 +39,10 @@ class EdgeClass:
         self.name = name
         self.src_class = src_class
         self.dst_class = dst_class
-        self.properties = properties
+        self.properties = properties or {}
+
+    def create_mapping(self, src, dst, properties=None):
+        return EdgeMapping(self.name, self.src_class, src, dst, validate_props(self.properties, properties))
 
 
 class VertexMapping:
@@ -40,7 +56,7 @@ class VertexMapping:
     def __init__(self, vertex_class, vertex_id, properties):
         self.vertex_class = vertex_class
         self.vertex_id = vertex_id
-        self.properties = properties
+        self.properties = properties or {}
 
 
 class EdgeMapping:
@@ -48,7 +64,9 @@ class EdgeMapping:
 
     Attributes:
         edge_class: class label
-        edge_id: column name for unique ID
+        src_class: source vertex class label
+        src: column name for source vertex
+        dst: column name for destination vertex
         properties: dict of {key: column}
     """
     def __init__(self, edge_class, src_class, src, dst, properties):
@@ -56,7 +74,34 @@ class EdgeMapping:
         self.src_class = src_class
         self.src = src
         self.dst = dst
-        self.properties = properties
+        self.properties = properties or {}
+
+
+class GraphSchema:
+    def __init__(self):
+        self.vc = {}
+        self.ec = {}
+
+    def add_vertex_class(self, name, properties=None):
+        if name not in self.vc.keys():
+            self.vc[name] = VertexClass(name, properties)
+
+    def add_edge_class(self, name, src_class, dst_class, properties=None):
+        if name not in self.ec.keys():
+            self.ec[name] = EdgeClass(name, src_class, dst_class, properties)
+
+
+class DataSource:
+    def __init__(self, path, vertex_mappings=None, edge_mappings=None):
+        self.path = path
+        self.vertex_mappings = vertex_mappings or []
+        self.edge_mappings = edge_mappings or []
+
+    def add_vertex_mapping(self, vertex_mapping):
+        return DataSource(self.path, self.vertex_mappings + [vertex_mapping], self.edge_mappings)
+
+    def add_edge_mapping(self, edge_mapping):
+        return DataSource(self.path, self.vertex_mappings, self.edge_mappings + [edge_mapping])
 
 
 class StellarIngestPayload:
@@ -64,24 +109,23 @@ class StellarIngestPayload:
 
     Attributes:
         session_id: session ID
+        schema: graph schema object
         sources: list of sources and their mappings
-        vertex_classes: list of vertex classes
-        edge_classes: list of edge classes
     """
-    def __init__(self, session_id, sources, vertex_classes, edge_classes):
+    def __init__(self, session_id, schema, sources):
         self.sessionId = session_id
-        self.sources = [s['path'] for s in sources]
+        self.sources = [s.path for s in sources]
         self.graphSchema = {
-            "classes": [self.vc2c(vc) for vc in vertex_classes],
-            "classLinks": [self.ec2cl(ec) for ec in edge_classes]
+            "classes": [self.vc2c(vc) for vc in schema.vc.values()],
+            "classLinks": [self.ec2cl(ec) for ec in schema.ec.values()]
         }
         self.mapping = {
             "nodes": [node for s in sources
                       for node in
-                      self.vms2nodes(s['path'], s['mapping'].get('vertices', []))],
+                      self.vms2nodes(s.path, s.vertex_mappings)],
             "links": [link for s in sources
                       for link in
-                      self.ems2links(s['path'], s['mapping'].get('edges', []))]
+                      self.ems2links(s.path, s.edge_mappings)]
         }
 
     @staticmethod
@@ -125,34 +169,9 @@ class StellarIngestPayload:
         return json.dumps(self.__dict__, indent=4)
 
 
-class StellarIngestor:
-    """Ingestor object
+def create_graph_schema():
+    return GraphSchema()
 
-    Attributes:
-        session: Stellar session
-        name: name of graph
-        schema: graph schema
-        sources: list of data sources
-    """
-    def __init__(self, session, name, schema=None, sources=None):
-        self.session = session
-        self.name = name
-        self.schema = {'vertex_classes':[], 'edge_classes':[]} if schema is None else schema
-        self.sources = [] if sources is None else sources
 
-    def add_source(self, path, mapping):
-        return StellarIngestor(
-            self.session,
-            self.name,
-            self.schema,
-            self.sources + [{"path": path, "mapping": mapping}]
-        )
-
-    def get_payload(self):
-        return StellarIngestPayload(self.session.session_id,
-                                    self.sources,
-                                    self.schema['vertex_classes'],
-                                    self.schema['edge_classes'])
-
-    def ingest(self):
-        return self.session.post("ingestor/start", self.get_payload().to_json())
+def new_data_source(path):
+    return DataSource(path)
