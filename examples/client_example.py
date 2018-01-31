@@ -1,7 +1,7 @@
 import stellar_py as st
 
 
-ss = st.create_session(url="stlr://12.34.56.78", session_id="test")
+ss = st.create_session(url="http://localhost")
 
 # create graph schema
 schema = st.create_graph_schema()
@@ -43,30 +43,23 @@ data_sources.append(
 )
 
 # ingestor
-graph_ingest = ss.run_ingestor(schema=schema, sources=data_sources).await_result()
-# graph_ingest = ss.run_ingestor(payload=jsonPayload)
+graph_ingest = ss.ingest(schema=schema, sources=data_sources, label='imdb')
+# task_ingest = ss.ingest_start(schema=schema, sources=data_sources)
+# graph_ingest = ss.ingest(payload=jsonPayload)
 
 # entity resolution
 # TODO
-# graph_er = ss.run_entity_resolution(graph=graph_ingest, params={}).await_result()
+graph_er = ss.er(graph=graph_ingest, params={}, label='imdb_er')
 
 # node embedder
 # TODO
-# embed_task = ss.run_embedder(graph=graph_er, target="local/path/to/embedded.csv", format="csv")
+df = ss.embedder(graph=graph_er)
 
 # node attr inference
 # TODO
-# nai_task = ss.run_nai(graph=graph_er, params={})
+graph_nai = ss.nai(graph=graph_er, params={}, label='imdb_nai')
 
-# check results
-# result_embed = embed_task.get_result()
-# result_nai = nai_task.get_result()
-# graph_nai = result_nai.graph if result_nai.status == 'completed' else None
-
-# write to path
+# graph to networkx
 # TODO
-# result_write = ss.write_graph(graph=graph_nai, target="local/path/to/graph.epgm", format="json")
+graph_nx = ss.to_networkx(graph_nai)
 
-# if result_embed.success:
-#     import pandas as pd
-#     df = pd.read_csv("local/path/to/embedded.csv")

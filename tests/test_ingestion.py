@@ -132,7 +132,7 @@ def test_run_ingestor():
     httpretty.register_uri(httpretty.POST, stellar_addr_ingest,
                            body=u'{"sessionId": "melon"}')
     ss = st.create_session(url=stellar_addr, session_id="test_run_ingestor")
-    task = ss.run_ingestor(graph_schema(), [data_source()])
-    assert task.session_id == "test_run_ingestor"
-    assert ss.session_id == "melon"
+    task = ss.ingest_start(graph_schema(), [data_source()])
+    assert task._session_id == "stellar:coordinator:sessions:ingestor:test_run_ingestor"
+    assert ss._session_id == "melon"
 
