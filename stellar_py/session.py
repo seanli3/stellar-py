@@ -1,6 +1,7 @@
 import requests
 from stellar_py.ingestion import StellarIngestPayload
 from stellar_py.nai import StellarNAIPayload
+from stellar_py.er import StellarERPayload
 
 
 class SessionError(Exception):
@@ -32,6 +33,7 @@ class StellarTask:
 class StellarSession:
 
     ENDPOINT_INGESTOR_START = 'ingestor/start'
+    ENDPOINT_ER_START = 'er/start'  # TODO: update when finalised
     ENDPOINT_NAI_START = 'nai/tasks'
 
     """Handles communication with Stellar Coordinator.
@@ -49,13 +51,24 @@ class StellarSession:
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         return requests.post(url, data=data, headers=headers)
 
+    def get_task_update_session(self, session_id):
+        task = StellarTask(self.addr, self.session_id)
+        self.session_id = session_id
+        return task
+
     def run_ingestor(self, schema, sources):
         payload = StellarIngestPayload(self.session_id, schema, sources).to_json()
         r = self.post(self.ENDPOINT_INGESTOR_START, payload)
         if r.status_code == 200:
-            task = StellarTask(self.addr, self.session_id)
-            self.session_id = r.json()['sessionId']
-            return task
+            return self.get_task_update_session(r.json()['sessionId'])
+        else:
+            raise SessionError(r.status_code, r.reason)
+
+    def run_er(self, graph, params):
+        payload = StellarERPayload(session_id=self.session_id, input_dir=graph.path, params=params).to_json()
+        r = self.post(self.ENDPOINT_ER_START, payload)
+        if r.status_code == 200:
+            return self.get_task_update_session(r.json()['sessionId'])
         else:
             raise SessionError(r.status_code, r.reason)
 
@@ -63,9 +76,7 @@ class StellarSession:
         payload = StellarNAIPayload(session_id=self.session_id, input_dir=graph.path, params=params).to_json()
         r = self.post(self.ENDPOINT_NAI_START, payload)
         if r.status_code == 200:
-            task = StellarTask(self.addr, self.session_id)
-            self.session_id = r.json()['sessionId']
-            return task
+            return self.get_task_update_session(r.json()['sessionId'])
         else:
             raise SessionError(r.status_code, r.reason)
 
