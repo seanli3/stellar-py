@@ -17,6 +17,21 @@ def graph_schema():
     return schema
 
 
+@pytest.fixture(scope="module")
+def data_source():
+    schema = graph_schema()
+    source = st.new_data_source("path")
+    source.add_vertex_mapping(schema.vc['src vertex'].create_mapping(vertex_id="SrcId"))
+    source.add_vertex_mapping(schema.vc['dst vertex'].create_mapping(vertex_id="DstId",
+                                                                     properties={}))
+    source.add_vertex_mapping(schema.vc['dst vertex 2'].create_mapping(
+        vertex_id="DstId2", properties={'number': 'Number'}))
+    source.add_edge_mapping(schema.ec['edge'].create_mapping(src="SrcId", dst="DstId"))
+    source.add_edge_mapping(schema.ec['edge 2'].create_mapping(src="SrcId", dst="DstId2",
+                                                               properties={'str': 'Address'}))
+    return source
+
+
 def test_graph_schema():
     schema = graph_schema()
     assert schema.vc['src vertex'].name == 'src vertex'
@@ -36,29 +51,20 @@ def test_graph_schema():
 
 
 def test_data_source():
-    schema = graph_schema()
-    data_source = st.new_data_source("path")
-    data_source = data_source.add_vertex_mapping(schema.vc['src vertex'].create_mapping(vertex_id="SrcId"))
-    data_source = data_source.add_vertex_mapping(schema.vc['dst vertex'].create_mapping(vertex_id="DstId",
-                                                                                        properties={}))
-    data_source = data_source.add_vertex_mapping(schema.vc['dst vertex 2'].create_mapping(
-        vertex_id="DstId2", properties={'number': 'Number'}))
-    data_source = data_source.add_edge_mapping(schema.ec['edge'].create_mapping(src="SrcId", dst="DstId"))
-    data_source = data_source.add_edge_mapping(schema.ec['edge 2'].create_mapping(src="SrcId", dst="DstId2",
-                                                                                  properties={'str': 'Address'}))
-    assert data_source.path == "path"
-    assert len(data_source.vertex_mappings) == 3
-    assert len(data_source.edge_mappings) == 2
+    source = data_source()
+    assert source.path == "path"
+    assert len(source.vertex_mappings) == 3
+    assert len(source.edge_mappings) == 2
 
 
 def test_data_source_invalid_properties():
     schema = graph_schema()
-    data_source = st.new_data_source("path")
+    source = st.new_data_source("path")
     with pytest.raises(KeyError):
-        data_source.add_vertex_mapping(
+        source.add_vertex_mapping(
             schema.vc['src vertex'].create_mapping(vertex_id="SrcId", properties={'number': 'Number'}))
     with pytest.raises(KeyError):
-        data_source.add_edge_mapping(schema.ec['edge 2'].create_mapping(src='SrcId', dst='DstId2',
-                                                                        properties={'strr': 'Address'}))
+        source.add_edge_mapping(schema.ec['edge 2'].create_mapping(src='SrcId', dst='DstId2',
+                                                                   properties={'strr': 'Address'}))
 
 
