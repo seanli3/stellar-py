@@ -1,7 +1,10 @@
 from stellar_py.ingestion import *
+import stellar_py as st
 import pytest
+import httpretty
 
 stellar_addr = "http://localhost:3000"
+stellar_addr_ingest = stellar_addr + "/ingestor/start"
 graph_name = "test-graph"
 
 
@@ -122,3 +125,14 @@ def test_ingest_payload_ems2links():
     assert links[0]['@dest'] == {'column': 'DstId', 'source': 'path'}
     assert links[0]['@type'] == {'name': 'edge 2', 'source': 'src vertex'}
     assert links[0]['str'] == {'column': 'Address', 'source': 'path'}
+
+
+@httpretty.activate
+def test_run_ingestor():
+    httpretty.register_uri(httpretty.POST, stellar_addr_ingest,
+                           body=u'{"sessionId": "melon"}')
+    ss = st.create_session(url=stellar_addr, session_id="test_run_ingestor")
+    task = ss.run_ingestor(graph_schema(), [data_source()])
+    assert task.session_id == "test_run_ingestor"
+    assert ss.session_id == "melon"
+

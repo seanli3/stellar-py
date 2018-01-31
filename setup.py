@@ -10,5 +10,5 @@ setup(name='stellar-py',
       license='Apache 2.0',
       install_requires=['requests'],
       setup_requires=['pytest-runner'],
-      tests_require=['pytest'],
+      tests_require=['pytest', 'httpretty'],
       packages=find_packages())
