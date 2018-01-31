@@ -98,10 +98,10 @@ class DataSource:
         self.edge_mappings = edge_mappings or []
 
     def add_vertex_mapping(self, vertex_mapping):
-        return DataSource(self.path, self.vertex_mappings + [vertex_mapping], self.edge_mappings)
+        self.vertex_mappings.append(vertex_mapping)
 
     def add_edge_mapping(self, edge_mapping):
-        return DataSource(self.path, self.vertex_mappings, self.edge_mappings + [edge_mapping])
+        self.edge_mappings.append(edge_mapping)
 
 
 class StellarIngestPayload:
