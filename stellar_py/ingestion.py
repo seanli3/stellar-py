@@ -1,4 +1,4 @@
-import json
+from stellar_py.payload import Payload
 
 
 def validate_props(schema_props, mapping_props):
@@ -104,7 +104,7 @@ class DataSource:
         self.edge_mappings.append(edge_mapping)
 
 
-class StellarIngestPayload:
+class StellarIngestPayload(Payload):
     """Payload object used to start ingestion
 
     Attributes:
@@ -164,9 +164,6 @@ class StellarIngestPayload:
             link["@type"] = {"name": em.edge_class, "source": em.src_class}
             return link
         return [em2link(em) for em in ems]
-
-    def to_json(self):
-        return json.dumps(self.__dict__, indent=4)
 
 
 def create_graph_schema():
