@@ -79,16 +79,16 @@ class EdgeMapping:
 
 class GraphSchema:
     def __init__(self):
-        self.vc = {}
-        self.ec = {}
+        self.vertex = {}
+        self.edge = {}
 
     def add_vertex_class(self, name, properties=None):
-        if name not in self.vc.keys():
-            self.vc[name] = VertexClass(name, properties)
+        if name not in self.vertex.keys():
+            self.vertex[name] = VertexClass(name, properties)
 
     def add_edge_class(self, name, src_class, dst_class, properties=None):
-        if name not in self.ec.keys():
-            self.ec[name] = EdgeClass(name, src_class, dst_class, properties)
+        if name not in self.edge.keys():
+            self.edge[name] = EdgeClass(name, src_class, dst_class, properties)
 
 
 class DataSource:
@@ -116,8 +116,8 @@ class StellarIngestPayload:
         self.sessionId = session_id
         self.sources = [s.path for s in sources]
         self.graphSchema = {
-            "classes": [self.vc2c(vc) for vc in schema.vc.values()],
-            "classLinks": [self.ec2cl(ec) for ec in schema.ec.values()]
+            "classes": [self.vc2c(vc) for vc in schema.vertex.values()],
+            "classLinks": [self.ec2cl(ec) for ec in schema.edge.values()]
         }
         self.mapping = {
             "nodes": [node for s in sources

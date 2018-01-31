@@ -23,7 +23,7 @@ schema.add_edge_class(
 data_sources = list()
 data_sources.append(
     st.new_data_source(path='nodes.csv').add_vertex_mapping(
-        schema.vc['Author'].create_mapping(
+        schema.vertex['Author'].create_mapping(
             vertex_id='Id',
             properties={
                 'extref_id': 'Extref_Id',
@@ -35,7 +35,7 @@ data_sources.append(
 )
 data_sources.append(
     st.new_data_source(path="edges.csv").add_edge_mapping(
-        schema.ec['IsSameAs'].create_mapping(
+        schema.edge['IsSameAs'].create_mapping(
             src="Source",
             dst="Target"
         )
