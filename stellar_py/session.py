@@ -30,6 +30,10 @@ class StellarTask:
 
 
 class StellarSession:
+
+    ENDPOINT_INGESTOR_START = 'ingestor/start'
+    ENDPOINT_NAI_START = 'nai/tasks'
+
     """Handles communication with Stellar Coordinator.
 
     Attributes:
@@ -47,7 +51,7 @@ class StellarSession:
 
     def run_ingestor(self, schema, sources):
         payload = StellarIngestPayload(self.session_id, schema, sources).to_json()
-        r = self.post("ingestor/start", payload)
+        r = self.post(self.ENDPOINT_INGESTOR_START, payload)
         if r.status_code == 200:
             task = StellarTask(self.addr, self.session_id)
             self.session_id = r.json()['sessionId']
@@ -57,7 +61,7 @@ class StellarSession:
 
     def run_nai(self, graph, params):
         payload = StellarNAIPayload(session_id=self.session_id, input_dir=graph.path, params=params).to_json()
-        r = self.post("nai/tasks", payload)
+        r = self.post(self.ENDPOINT_NAI_START, payload)
         if r.status_code == 200:
             task = StellarTask(self.addr, self.session_id)
             self.session_id = r.json()['sessionId']
