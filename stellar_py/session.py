@@ -1,5 +1,6 @@
 import requests
 from stellar_py.ingestion import StellarIngestPayload
+from stellar_py.nai import StellarNAIPayload
 
 
 class SessionError(Exception):
@@ -47,6 +48,16 @@ class StellarSession:
     def run_ingestor(self, schema, sources):
         payload = StellarIngestPayload(self.session_id, schema, sources).to_json()
         r = self.post("ingestor/start", payload)
+        if r.status_code == 200:
+            task = StellarTask(self.addr, self.session_id)
+            self.session_id = r.json()['sessionId']
+            return task
+        else:
+            raise SessionError(r.status_code, r.reason)
+
+    def run_nai(self, graph, params):
+        payload = StellarNAIPayload(session_id=self.session_id, input_dir=graph.path, params=params).to_json()
+        r = self.post("nai/tasks", payload)
         if r.status_code == 200:
             task = StellarTask(self.addr, self.session_id)
             self.session_id = r.json()['sessionId']
