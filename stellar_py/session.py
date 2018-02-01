@@ -49,10 +49,10 @@ class StellarTask:
 
 class StellarSession:
 
+    _ENDPOINT_INIT = 'session/create'  # TODO: update when finalised
     _ENDPOINT_INGESTOR_START = 'ingestor/start'
     _ENDPOINT_ER_START = 'er/start'  # TODO: update when finalised
     _ENDPOINT_NAI_START = 'nai/tasks'
-    _REDIS_ADDRESS = 'localhost'  # TODO: update when finalised
 
     _SESSIONS_INGESTOR = 'stellar:coordinator:sessions:ingestor:'
     _SESSIONS_ER = 'stellar:coordinator:sessions:er:'  # TODO: update when finalised
@@ -101,13 +101,13 @@ class StellarSession:
         else:
             raise SessionError(r.status_code, r.reason)
 
-    def ingest(self, schema, sources):
+    def ingest(self, schema, sources, label=None):
         task = self.ingest_start(schema, sources)
         res = task.wait_for_result()
         if res.success:
             return StellarGraph(res.dir)
         else:
-            raise SessionError(res.reason)
+            raise SessionError(500, res.reason)
 
     def er_start(self, graph, params):
         payload = StellarERPayload(session_id=self._session_id, input_dir=graph.path, params=params).to_json()
@@ -117,13 +117,13 @@ class StellarSession:
         else:
             raise SessionError(r.status_code, r.reason)
 
-    def er(self, graph, params):
+    def er(self, graph, params, label=None):
         task = self.er_start(graph, params)
         res = task.wait_for_result()
         if res.success:
             return StellarGraph(res.dir)
         else:
-            raise SessionError(res.reason)
+            raise SessionError(500, res.reason)
 
     def nai_start(self, graph, params):
         payload = StellarNAIPayload(session_id=self._session_id, input_dir=graph.path, params=params).to_json()
@@ -133,14 +133,14 @@ class StellarSession:
         else:
             raise SessionError(r.status_code, r.reason)
 
-    def nai(self, graph, params):
+    def nai(self, graph, params, label=None):
         task = self.nai_start(graph, params)
         res = task.wait_for_result()
         if res.success:
             return StellarGraph(res.dir)
         else:
-            raise SessionError(res.reason)
+            raise SessionError(500, res.reason)
 
 
-def create_session(url, session_id="stellar_py_session"):
-    return StellarSession(url, session_id)
+def create_session(url):
+    return StellarSession(url)

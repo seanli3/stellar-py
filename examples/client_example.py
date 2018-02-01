@@ -2,7 +2,7 @@ import stellar_py as st
 from stellar_py.session import StellarTask
 
 
-ss = st.create_session(url="http://localhost")
+ss = st.create_session(url="https://0891ed59-c6d6-41e5-92ef-c67647d5370d.mock.pstmn.io")
 
 # create graph schema
 schema = st.create_graph_schema()

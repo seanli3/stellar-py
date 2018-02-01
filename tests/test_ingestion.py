@@ -5,6 +5,7 @@ import httpretty
 
 stellar_addr = "http://localhost:3000"
 stellar_addr_ingest = stellar_addr + "/ingestor/start"
+stellar_addr_session = stellar_addr + "/session/create"
 graph_name = "test-graph"
 
 
@@ -131,8 +132,9 @@ def test_ingest_payload_ems2links():
 def test_run_ingestor():
     httpretty.register_uri(httpretty.POST, stellar_addr_ingest,
                            body=u'{"sessionId": "melon"}')
-    ss = st.create_session(url=stellar_addr, session_id="test_run_ingestor")
+    httpretty.register_uri(httpretty.GET, stellar_addr_session, body=u'{"sessionId": "dummy_session_id"}')
+    ss = st.create_session(url=stellar_addr)
     task = ss.ingest_start(graph_schema(), [data_source()])
-    assert task._session_id == "stellar:coordinator:sessions:ingestor:test_run_ingestor"
+    assert task._session_id == "stellar:coordinator:sessions:ingestor:dummy_session_id"
     assert ss._session_id == "melon"
 
