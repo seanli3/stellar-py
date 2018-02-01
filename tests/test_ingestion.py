@@ -1,4 +1,5 @@
 from stellar_py.ingestion import *
+from redis import StrictRedis
 import stellar_py as st
 import pytest
 import httpretty
@@ -6,7 +7,6 @@ import httpretty
 stellar_addr = "http://localhost:3000"
 stellar_addr_ingest = stellar_addr + "/ingestor/start"
 stellar_addr_session = stellar_addr + "/session/create"
-graph_name = "test-graph"
 
 
 @pytest.fixture(scope="module")
@@ -131,7 +131,7 @@ def test_ingest_payload_ems2links():
 
 
 @httpretty.activate
-def test_run_ingestor():
+def test_ingest_start():
     httpretty.register_uri(httpretty.POST, stellar_addr_ingest,
                            body=u'{"sessionId": "melon"}')
     httpretty.register_uri(httpretty.GET, stellar_addr_session, body=u'{"sessionId": "dummy_session_id"}')

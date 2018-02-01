@@ -98,7 +98,8 @@ class StellarSession:
         payload = StellarIngestPayload(self._session_id, schema, sources, label).to_json()
         r = self._post(self._ENDPOINT_INGESTOR_START, payload)
         if r.status_code == 200:
-            return self._get_task_update_session(self._SESSIONS_INGESTOR, self._PAYLOADS_INGESTOR, r.json()['sessionId'])
+            return self._get_task_update_session(
+                self._SESSIONS_INGESTOR, self._PAYLOADS_INGESTOR, r.json()['sessionId'])
         else:
             raise SessionError(r.status_code, r.reason)
 
