@@ -1,4 +1,5 @@
 import stellar_py as st
+from stellar_py.session import StellarTask
 
 
 ss = st.create_session(url="http://localhost")
@@ -20,27 +21,25 @@ schema.add_edge_class(
 )
 
 # use schema to configure data sources
-data_sources = list()
-data_sources.append(
-    st.new_data_source(path='nodes.csv').add_vertex_mapping(
-        schema.vertex['Author'].create_mapping(
-            vertex_id='Id',
-            properties={
-                'extref_id': 'Extref_Id',
-                'type': 'Type',
-                'name': 'Label'
-            }
-        )
+src1 = st.new_data_source(path='nodes.csv')
+src1.add_vertex_mapping(
+    schema.vertex['Author'].create_mapping(
+        vertex_id='Id',
+        properties={
+            'extref_id': 'Extref_Id',
+            'type': 'Type',
+            'name': 'Label'
+        }
     )
 )
-data_sources.append(
-    st.new_data_source(path="edges.csv").add_edge_mapping(
-        schema.edge['IsSameAs'].create_mapping(
-            src="Source",
-            dst="Target"
-        )
+src2 = st.new_data_source(path="edges.csv")
+src2.add_edge_mapping(
+    schema.edge['IsSameAs'].create_mapping(
+        src="Source",
+        dst="Target"
     )
 )
+data_sources = [src1, src2]
 
 # ingestor
 graph_ingest = ss.ingest(schema=schema, sources=data_sources, label='imdb')
