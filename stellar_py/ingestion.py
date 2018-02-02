@@ -112,8 +112,8 @@ class StellarIngestPayload(Payload):
         schema: graph schema object
         sources: list of sources and their mappings
     """
-    def __init__(self, session_id, schema, sources):
-        self.sessionId = session_id
+    def __init__(self, session_id, schema, sources, label='ingest', auto=False):
+        Payload.__init__(self, session_id, label, auto)
         self.sources = [s.path for s in sources]
         self.graphSchema = {
             "classes": [self.vc2c(vc) for vc in schema.vertex.values()],

@@ -47,18 +47,16 @@ graph_ingest = ss.ingest(schema=schema, sources=data_sources, label='imdb')
 # graph_ingest = ss.ingest(payload=jsonPayload)
 
 # entity resolution
-# TODO
 graph_er = ss.er(graph=graph_ingest, params={}, label='imdb_er')
 
 # node embedder
 # TODO
-df = ss.embedder(graph=graph_er)
+# df = ss.embedder(graph=graph_er)
 
 # node attr inference
-# TODO
 graph_nai = ss.nai(graph=graph_er, params={}, label='imdb_nai')
 
 # graph to networkx
 # TODO
-graph_nx = ss.to_networkx(graph_nai)
+# graph_nx = ss.to_networkx(graph_nai)
 

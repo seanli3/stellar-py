@@ -48,6 +48,7 @@ class StellarTask:
 
 
 class StellarSession:
+    # TODO: add label and auto to payloads
 
     _ENDPOINT_INIT = 'session/create'  # TODO: update when finalised
     _ENDPOINT_INGESTOR_START = 'ingestor/start'
@@ -93,48 +94,48 @@ class StellarSession:
         self._session_id = session_id_new
         return task
 
-    def ingest_start(self, schema, sources):
-        payload = StellarIngestPayload(self._session_id, schema, sources).to_json()
+    def ingest_start(self, schema, sources, label):
+        payload = StellarIngestPayload(self._session_id, schema, sources, label).to_json()
         r = self._post(self._ENDPOINT_INGESTOR_START, payload)
         if r.status_code == 200:
             return self._get_task_update_session(self._SESSIONS_INGESTOR, self._PAYLOADS_INGESTOR, r.json()['sessionId'])
         else:
             raise SessionError(r.status_code, r.reason)
 
-    def ingest(self, schema, sources, label=None):
-        task = self.ingest_start(schema, sources)
+    def ingest(self, schema, sources, label='ingest'):
+        task = self.ingest_start(schema, sources, label)
         res = task.wait_for_result()
         if res.success:
             return StellarGraph(res.dir)
         else:
             raise SessionError(500, res.reason)
 
-    def er_start(self, graph, params):
-        payload = StellarERPayload(session_id=self._session_id, input_dir=graph.path, params=params).to_json()
+    def er_start(self, graph, params, label):
+        payload = StellarERPayload(self._session_id, graph.path, params, label).to_json()
         r = self._post(self._ENDPOINT_ER_START, payload)
         if r.status_code == 200:
             return self._get_task_update_session(self._SESSIONS_ER, self._PAYLOADS_ER, r.json()['sessionId'])
         else:
             raise SessionError(r.status_code, r.reason)
 
-    def er(self, graph, params, label=None):
-        task = self.er_start(graph, params)
+    def er(self, graph, params, label='er'):
+        task = self.er_start(graph, params, label)
         res = task.wait_for_result()
         if res.success:
             return StellarGraph(res.dir)
         else:
             raise SessionError(500, res.reason)
 
-    def nai_start(self, graph, params):
-        payload = StellarNAIPayload(session_id=self._session_id, input_dir=graph.path, params=params).to_json()
+    def nai_start(self, graph, params, label):
+        payload = StellarNAIPayload(self._session_id, graph.path, params, label).to_json()
         r = self._post(self._ENDPOINT_NAI_START, payload)
         if r.status_code == 200:
             return self._get_task_update_session(self._SESSIONS_NAI, self._PAYLOADS_NAI, r.json()['sessionId'])
         else:
             raise SessionError(r.status_code, r.reason)
 
-    def nai(self, graph, params, label=None):
-        task = self.nai_start(graph, params)
+    def nai(self, graph, params, label='nai'):
+        task = self.nai_start(graph, params, label)
         res = task.wait_for_result()
         if res.success:
             return StellarGraph(res.dir)

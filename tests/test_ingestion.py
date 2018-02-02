@@ -75,9 +75,11 @@ def test_data_source_invalid_properties():
 def test_ingest_payload():
     schema = graph_schema()
     source = data_source()
-    payload = StellarIngestPayload(session_id="id", schema=schema, sources=[source])
+    payload = StellarIngestPayload(session_id="id", schema=schema, sources=[source], label="test_ingest_payload")
     assert payload.sessionId == "id"
     assert payload.sources == ['path']
+    assert payload.label == 'test_ingest_payload'
+    assert payload.auto == 'false'
     assert len(payload.graphSchema['classes']) == len(schema.vertex)
     assert len(payload.graphSchema['classLinks']) == len(schema.edge)
     assert len(payload.mapping['nodes']) == len(source.vertex_mappings)
@@ -134,7 +136,18 @@ def test_run_ingestor():
                            body=u'{"sessionId": "melon"}')
     httpretty.register_uri(httpretty.GET, stellar_addr_session, body=u'{"sessionId": "dummy_session_id"}')
     ss = st.create_session(url=stellar_addr)
-    task = ss.ingest_start(graph_schema(), [data_source()])
+    task = ss.ingest_start(graph_schema(), [data_source()], 'test_ingest')
     assert task._session_id == "stellar:coordinator:sessions:ingestor:dummy_session_id"
     assert ss._session_id == "melon"
 
+
+@httpretty.activate
+def test_ingest(monkeypatch):
+    httpretty.register_uri(httpretty.POST, stellar_addr_ingest, body=u'{"sessionId": "melon"}')
+    httpretty.register_uri(httpretty.GET, stellar_addr_session, body=u'{"sessionId": "dummy_session_id"}')
+    monkeypatch.setattr(
+        'test_ingestion.StrictRedis.get',
+        lambda _, ses_id: u'{"outputDir": "test_path.epgm"}' if 'payloads' in ses_id else u'{"status": "completed"}')
+    ss = st.create_session(url=stellar_addr)
+    graph = ss.ingest(graph_schema(), [data_source()], 'test_ingest')
+    assert graph.path == "test_path.epgm"
