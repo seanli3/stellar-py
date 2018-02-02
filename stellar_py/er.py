@@ -1,8 +1,18 @@
+"""ER
+
+Classes and methods related to the Entity Resolution module.
+
+"""
+
 from stellar_py.payload import Payload
+from typing import Dict
 
 
 class StellarERPayload(Payload):
-    def __init__(self, session_id, input_dir, params, label='er', auto=False):
+    """Payload to start an ER task
+
+    """
+    def __init__(self, session_id: str, input_dir: str, params: Dict[str, str], label: str, auto: bool = False):
         # TODO: update when finalised
         Payload.__init__(self, session_id, label, auto)
         self.input = input_dir

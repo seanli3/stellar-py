@@ -1,8 +1,18 @@
+"""NAI
+
+Classes and methods related to the Node Attribute Inference module
+
+"""
+
 from stellar_py.payload import Payload
+from typing import Dict
 
 
 class StellarNAIPayload(Payload):
-    def __init__(self, session_id, input_dir, params, label='nai', auto=False):
+    """Payload to start a NAI task
+
+    """
+    def __init__(self, session_id: str, input_dir: str, params: Dict[str, str], label: str, auto: bool = False):
         Payload.__init__(self, session_id, label, auto)
         self.input = input_dir
         self.output = "pred/"
