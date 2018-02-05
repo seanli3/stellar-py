@@ -1,17 +1,23 @@
 from stellar_py.payload import Payload
+from typing import Dict
 
 
-def validate_props(schema_props, mapping_props):
-    if not mapping_props:
-        return mapping_props
-    schema_props_keys = set(schema_props.keys())
-    mapping_props_keys = set(mapping_props.keys())
-    if len(mapping_props_keys - schema_props_keys.intersection(mapping_props_keys)) > 0:
-        raise KeyError("invalid properties")
-    return mapping_props
+class ElementClass:
+    def __init__(self, name, properties):
+        self.name = name
+        self.properties = properties or {}
+
+    def validate_props(self, properties: Dict[str, str]):
+        if not properties:
+            return properties
+        schema_props_keys = set(self.properties.keys())
+        mapping_props_keys = set(properties.keys())
+        if len(mapping_props_keys - schema_props_keys.intersection(mapping_props_keys)) > 0:
+            raise KeyError("invalid properties")
+        return properties
 
 
-class VertexClass:
+class VertexClass(ElementClass):
     """Vertex class for graph schema
 
     Attributes:
@@ -19,14 +25,13 @@ class VertexClass:
         properties: dict of {key: type}
     """
     def __init__(self, name, properties):
-        self.name = name
-        self.properties = properties or {}
+        ElementClass.__init__(self, name, properties)
 
     def create_mapping(self, vertex_id, properties=None):
-        return VertexMapping(self.name, vertex_id, validate_props(self.properties, properties))
+        return VertexMapping(self.name, vertex_id, self.validate_props(properties))
 
 
-class EdgeClass:
+class EdgeClass(ElementClass):
     """Edge class for graph schema
 
     Attributes:
@@ -36,13 +41,12 @@ class EdgeClass:
         properties: dict of {key: type}
     """
     def __init__(self, name, src_class, dst_class, properties):
-        self.name = name
+        ElementClass.__init__(self, name, properties)
         self.src_class = src_class
         self.dst_class = dst_class
-        self.properties = properties or {}
 
     def create_mapping(self, src, dst, properties=None):
-        return EdgeMapping(self.name, self.src_class, src, dst, validate_props(self.properties, properties))
+        return EdgeMapping(self.name, self.src_class, src, dst, self.validate_props(properties))
 
 
 class VertexMapping:
