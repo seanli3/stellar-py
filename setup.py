@@ -8,7 +8,10 @@ setup(name='stellar-py',
       author='Kevin Jung',
       author_email='kevin.jung@data61.csiro.au',
       license='Apache 2.0',
-      install_requires=['requests'],
+      install_requires=['requests', 'redis', 'polling'],
       setup_requires=['pytest-runner'],
-      tests_require=['pytest', 'httpretty'],
+      tests_require=['pytest'],
+      extras_require={
+            'testing': ['httpretty'],
+      },
       packages=find_packages())

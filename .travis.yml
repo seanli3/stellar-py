@@ -3,6 +3,6 @@ python:
     - "3.6"
     - "nightly"
 install:
-    - pip install .
+    - pip install .[testing]
 script:
     - pytest

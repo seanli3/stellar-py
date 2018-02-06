@@ -51,6 +51,8 @@ data_source.add_vertex_mapping(
 )
 
 # run ingestor
-task = ss.run_ingestor(schema=schema, sources=[data_source])
-result = task.wait_for_result()
+graph_ingest = ss.ingest(schema=schema, sources=[data_source])
 ```
+
+## Other examples
+Examples can be found [here](examples)

@@ -1,7 +1,8 @@
 import stellar_py as st
+from stellar_py.session import StellarTask
 
 
-ss = st.create_session(url="stlr://12.34.56.78", session_id="test")
+ss = st.create_session(url="https://0891ed59-c6d6-41e5-92ef-c67647d5370d.mock.pstmn.io")
 
 # create graph schema
 schema = st.create_graph_schema()
@@ -20,53 +21,42 @@ schema.add_edge_class(
 )
 
 # use schema to configure data sources
-data_sources = list()
-data_sources.append(
-    st.new_data_source(path='nodes.csv').add_vertex_mapping(
-        schema.vertex['Author'].create_mapping(
-            vertex_id='Id',
-            properties={
-                'extref_id': 'Extref_Id',
-                'type': 'Type',
-                'name': 'Label'
-            }
-        )
+src1 = st.new_data_source(path='nodes.csv')
+src1.add_vertex_mapping(
+    schema.vertex['Author'].create_mapping(
+        vertex_id='Id',
+        properties={
+            'extref_id': 'Extref_Id',
+            'type': 'Type',
+            'name': 'Label'
+        }
     )
 )
-data_sources.append(
-    st.new_data_source(path="edges.csv").add_edge_mapping(
-        schema.edge['IsSameAs'].create_mapping(
-            src="Source",
-            dst="Target"
-        )
+src2 = st.new_data_source(path="edges.csv")
+src2.add_edge_mapping(
+    schema.edge['IsSameAs'].create_mapping(
+        src="Source",
+        dst="Target"
     )
 )
+data_sources = [src1, src2]
 
 # ingestor
-graph_ingest = ss.run_ingestor(schema=schema, sources=data_sources).await_result()
-# graph_ingest = ss.run_ingestor(payload=jsonPayload)
+graph_ingest = ss.ingest(schema=schema, sources=data_sources, label='imdb')
+# task_ingest = ss.ingest_start(schema=schema, sources=data_sources)
+# graph_ingest = ss.ingest(payload=jsonPayload)
 
 # entity resolution
-# TODO
-# graph_er = ss.run_entity_resolution(graph=graph_ingest, params={}).await_result()
+graph_er = ss.er(graph=graph_ingest, params={}, label='imdb_er')
 
 # node embedder
 # TODO
-# embed_task = ss.run_embedder(graph=graph_er, target="local/path/to/embedded.csv", format="csv")
+# df = ss.embedder(graph=graph_er)
 
 # node attr inference
+graph_nai = ss.nai(graph=graph_er, params={}, label='imdb_nai')
+
+# graph to networkx
 # TODO
-# nai_task = ss.run_nai(graph=graph_er, params={})
+# graph_nx = ss.to_networkx(graph_nai)
 
-# check results
-# result_embed = embed_task.get_result()
-# result_nai = nai_task.get_result()
-# graph_nai = result_nai.graph if result_nai.status == 'completed' else None
-
-# write to path
-# TODO
-# result_write = ss.write_graph(graph=graph_nai, target="local/path/to/graph.epgm", format="json")
-
-# if result_embed.success:
-#     import pandas as pd
-#     df = pd.read_csv("local/path/to/embedded.csv")
