@@ -48,27 +48,31 @@ class StellarResult:
         self.status = status
         if status == 'completed':
             self.success = True
-            self.dir = payload['outputDir']
+            self.dir = payload['output']
         else:
             self.success = False
-            self.reason = payload['reason'] or 'Timed out at: ' + payload['lastHeartbeatTime']
+            self.reason = payload['error']
 
 
 class StellarTask:
     """Contains methods to obtain status and result of a task performed by a Stellar module
 
     """
-    def __init__(self, url: str, port: int, session_id: str, payload_id: str) -> None:
+
+    _STATUS_COMPLETE = 'completed'
+    _STATUS_ABORT = 'aborted'
+
+    def __init__(self, url: str, port: int, name: str, session_id: str) -> None:
         """Initialise
 
         :param url:         Redis URL
         :param port:        Redis Port
+        :param name:        task name ( ingest | er | nai )
         :param session_id:  session key
-        :param payload_id:  payload key
         """
         self._r = redis.StrictRedis(host=url, port=port, db=0, decode_responses=True)
         self._session_id = session_id
-        self._payload_id = payload_id
+        self._name = name
 
     def check_status(self) -> str:
         """Check status of task
@@ -77,14 +81,21 @@ class StellarTask:
         """
         return json.loads(self._r.get(self._session_id))['status']
 
+    def is_done(self) -> bool:
+        """Check if task is completed or aborted
+
+        :return: true if done
+        """
+        status = self.check_status()
+        return (status == self._STATUS_COMPLETE) or (status == self._STATUS_ABORT)
+
     def wait_for_result(self) -> StellarResult:
         """Poll status until result is available then create result
 
         :return:    StellarResult
         """
-        polling.poll(lambda: (self.check_status() == 'completed') or (self.check_status() == 'aborted'),
-                     step=1, poll_forever=True)
-        return StellarResult(self.check_status(), json.loads(self._r.get(self._payload_id)))
+        polling.poll(self.is_done, step=1, poll_forever=True)
+        return StellarResult(self.check_status(), json.loads(self._r.get(self._session_id))[self._name])
 
 
 class StellarSession:
@@ -97,13 +108,13 @@ class StellarSession:
     _ENDPOINT_ER_START = 'er/start'  # TODO: update when finalised
     _ENDPOINT_NAI_START = 'nai/tasks'
 
+    _TASK_INGESTOR = 'ingest'
+    _TASK_ER = 'er'
+    _TASK_NAI = 'nai'
+
     _SESSIONS_INGESTOR = 'stellar:coordinator:sessions:ingestor:'
     _SESSIONS_ER = 'stellar:coordinator:sessions:er:'  # TODO: update when finalised
     _SESSIONS_NAI = 'stellar:coordinator:sessions:nai:'
-
-    _PAYLOADS_INGESTOR = 'stellar:coordinator:payloads:ingestor:'
-    _PAYLOADS_ER = 'stellar:coordinator:payloads:er:'  # TODO: update when finalised
-    _PAYLOADS_NAI = 'stellar:coordinator:payloads:nai:'
 
     def __init__(self, url: str, redis_url: str = 'localhost', redis_port: int = 6379) -> None:
         """Create a Stellar Session Object
@@ -142,16 +153,15 @@ class StellarSession:
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         return requests.post(url, data=data, headers=headers)
 
-    def _get_task_update_session(self, session_prefix: str, payload_prefix: str, session_id_new: str) -> StellarTask:
+    def _get_task_update_session(self, session_prefix: str, task_name: str, session_id_new: str) -> StellarTask:
         """Create a reference to a newly created task, and update stale session with new session ID
 
         :param session_prefix:  Prefix string specific to session key
-        :param payload_prefix:  Prefix string specific to payload key
+        :param task_name:       Task name
         :param session_id_new:  New session ID
         :return:                StellarTask
         """
-        task = StellarTask(self._redis_url, self._redis_port,
-                           session_prefix + self._session_id, payload_prefix + self._session_id)
+        task = StellarTask(self._redis_url, self._redis_port, task_name, session_prefix + self._session_id)
         self._session_id = session_id_new
         return task
 
@@ -167,7 +177,7 @@ class StellarSession:
         r = self._post(self._ENDPOINT_INGESTOR_START, payload)
         if r.status_code == 200:
             return self._get_task_update_session(
-                self._SESSIONS_INGESTOR, self._PAYLOADS_INGESTOR, r.json()['sessionId'])
+                self._SESSIONS_INGESTOR, self._TASK_INGESTOR, r.json()['sessionId'])
         else:
             raise SessionError(r.status_code, r.reason)
 
@@ -197,7 +207,7 @@ class StellarSession:
         payload = StellarERPayload(self._session_id, graph.path, params, label).to_json()
         r = self._post(self._ENDPOINT_ER_START, payload)
         if r.status_code == 200:
-            return self._get_task_update_session(self._SESSIONS_ER, self._PAYLOADS_ER, r.json()['sessionId'])
+            return self._get_task_update_session(self._SESSIONS_ER, self._TASK_ER, r.json()['sessionId'])
         else:
             raise SessionError(r.status_code, r.reason)
 
@@ -227,7 +237,7 @@ class StellarSession:
         payload = StellarNAIPayload(self._session_id, graph.path, params, label).to_json()
         r = self._post(self._ENDPOINT_NAI_START, payload)
         if r.status_code == 200:
-            return self._get_task_update_session(self._SESSIONS_NAI, self._PAYLOADS_NAI, r.json()['sessionId'])
+            return self._get_task_update_session(self._SESSIONS_NAI, self._TASK_NAI, r.json()['sessionId'])
         else:
             raise SessionError(r.status_code, r.reason)
 

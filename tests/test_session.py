@@ -10,7 +10,7 @@ def test_session_error():
 
 
 def test_result_success():
-    payload = {'outputDir': 'graph.epgm'}
+    payload = {'output': 'graph.epgm'}
     result = StellarResult('completed', payload)
     assert result.status == 'completed'
     assert result.success
@@ -18,7 +18,7 @@ def test_result_success():
 
 
 def test_result_fail():
-    payload = {'reason': 'session error'}
+    payload = {'error': 'session error'}
     result = StellarResult('aborted', payload)
     assert result.status == 'aborted'
     assert not result.success
@@ -27,7 +27,7 @@ def test_result_fail():
 
 @pytest.fixture(scope='module')
 def get_task():
-    return StellarTask('12341234', 6379, 'test:sessions:1234', 'test:payloads:1234')
+    return StellarTask('12341234', 6379, 'ingest', 'test:sessions:1234')
 
 
 def test_task_init(monkeypatch):
@@ -44,15 +44,16 @@ def test_task_check_status(monkeypatch):
     monkeypatch.setattr(
         redis.StrictRedis,
         'get',
-        lambda _, ses_id: u'{"outputDir": "test_path.epgm"}' if 'payloads' in ses_id else u'{"status": "test status"}')
-    assert get_task().check_status() == 'test status'
+        lambda *_: u'{"status": "completed", "ingest": {"output": "test_path.epgm", "error":""}}'
+    )
+    assert get_task().check_status() == 'completed'
 
 
 def test_task_wait_for_result(monkeypatch):
     monkeypatch.setattr(
         redis.StrictRedis,
         'get',
-        lambda _, ses_id: u'{"outputDir": "test_path.epgm"}' if 'payloads' in ses_id else u'{"status": "completed"}'
+        lambda *_: u'{"status": "completed", "ingest": {"output": "test_path.epgm", "error":""}}'
     )
     result = get_task().wait_for_result()
     assert result.success
@@ -104,9 +105,8 @@ def test_session_get_task_update_session(monkeypatch):
     session = StellarSession('http://12341234')
     monkeypatch.setattr(redis, 'StrictRedis',
                         lambda **kwargs: kwargs)
-    task = session._get_task_update_session('test:sessions:', 'test:payloads:', 'new_sesh')
+    task = session._get_task_update_session('test:sessions:', 'ingest', 'new_sesh')
     assert session._session_id == 'new_sesh'
     assert task._session_id == 'test:sessions:old_sesh'
-    assert task._payload_id == 'test:payloads:old_sesh'
     assert task._r['host'] == 'localhost'
     assert task._r['port'] == 6379
