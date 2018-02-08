@@ -79,7 +79,6 @@ def test_ingest_payload():
     assert payload.sessionId == "id"
     assert payload.sources == ['path']
     assert payload.label == 'test_ingest_payload'
-    assert payload.auto == 'false'
     assert len(payload.graphSchema['classes']) == len(schema.vertex)
     assert len(payload.graphSchema['classLinks']) == len(schema.edge)
     assert len(payload.mapping['nodes']) == len(source.vertex_mappings)
