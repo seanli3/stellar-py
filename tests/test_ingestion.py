@@ -136,7 +136,7 @@ def test_ingest_start():
     httpretty.register_uri(httpretty.GET, stellar_addr_session, body=u'{"sessionId": "dummy_session_id"}')
     ss = st.create_session(url=stellar_addr)
     task = ss.ingest_start(graph_schema(), [data_source()], 'test_ingest')
-    assert task._session_id == "stellar:coordinator:sessions:ingestor:dummy_session_id"
+    assert task._session_id == "stellar:coordinator:sessions:dummy_session_id"
     assert ss._session_id == "melon"
 
 

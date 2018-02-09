@@ -61,6 +61,7 @@ class StellarTask:
 
     _STATUS_COMPLETE = 'completed'
     _STATUS_ABORT = 'aborted'
+    _REDIS_PREFIX = 'stellar:coordinator:sessions:'
 
     def __init__(self, url: str, port: int, name: str, session_id: str) -> None:
         """Initialise
@@ -71,7 +72,7 @@ class StellarTask:
         :param session_id:  session key
         """
         self._r = redis.StrictRedis(host=url, port=port, db=0, decode_responses=True)
-        self._session_id = session_id
+        self._session_id = self._REDIS_PREFIX + session_id
         self._name = name
 
     def check_status(self) -> str:
@@ -112,10 +113,6 @@ class StellarSession:
     _TASK_ER = 'er'
     _TASK_NAI = 'nai'
 
-    _SESSIONS_INGESTOR = 'stellar:coordinator:sessions:ingestor:'
-    _SESSIONS_ER = 'stellar:coordinator:sessions:er:'  # TODO: update when finalised
-    _SESSIONS_NAI = 'stellar:coordinator:sessions:nai:'
-
     def __init__(self, url: str, redis_url: str = 'localhost', redis_port: int = 6379) -> None:
         """Create a Stellar Session Object
 
@@ -153,7 +150,7 @@ class StellarSession:
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         return requests.post(url, data=data, headers=headers)
 
-    def _get_task_update_session(self, session_prefix: str, task_name: str, session_id_new: str) -> StellarTask:
+    def _get_task_update_session(self, task_name: str, session_id_new: str) -> StellarTask:
         """Create a reference to a newly created task, and update stale session with new session ID
 
         :param session_prefix:  Prefix string specific to session key
@@ -161,7 +158,7 @@ class StellarSession:
         :param session_id_new:  New session ID
         :return:                StellarTask
         """
-        task = StellarTask(self._redis_url, self._redis_port, task_name, session_prefix + self._session_id)
+        task = StellarTask(self._redis_url, self._redis_port, task_name, self._session_id)
         self._session_id = session_id_new
         return task
 
@@ -176,8 +173,7 @@ class StellarSession:
         payload = StellarIngestPayload(self._session_id, schema, sources, label).to_json()
         r = self._post(self._ENDPOINT_INGESTOR_START, payload)
         if r.status_code == 200:
-            return self._get_task_update_session(
-                self._SESSIONS_INGESTOR, self._TASK_INGESTOR, r.json()['sessionId'])
+            return self._get_task_update_session(self._TASK_INGESTOR, r.json()['sessionId'])
         else:
             raise SessionError(r.status_code, r.reason)
 
@@ -207,7 +203,7 @@ class StellarSession:
         payload = StellarERPayload(self._session_id, graph.path, params, label).to_json()
         r = self._post(self._ENDPOINT_ER_START, payload)
         if r.status_code == 200:
-            return self._get_task_update_session(self._SESSIONS_ER, self._TASK_ER, r.json()['sessionId'])
+            return self._get_task_update_session(self._TASK_ER, r.json()['sessionId'])
         else:
             raise SessionError(r.status_code, r.reason)
 
@@ -237,7 +233,7 @@ class StellarSession:
         payload = StellarNAIPayload(self._session_id, graph.path, params, label).to_json()
         r = self._post(self._ENDPOINT_NAI_START, payload)
         if r.status_code == 200:
-            return self._get_task_update_session(self._SESSIONS_NAI, self._TASK_NAI, r.json()['sessionId'])
+            return self._get_task_update_session(self._TASK_NAI, r.json()['sessionId'])
         else:
             raise SessionError(r.status_code, r.reason)
 

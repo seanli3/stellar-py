@@ -105,8 +105,8 @@ def test_session_get_task_update_session(monkeypatch):
     session = StellarSession('http://12341234')
     monkeypatch.setattr(redis, 'StrictRedis',
                         lambda **kwargs: kwargs)
-    task = session._get_task_update_session('test:sessions:', 'ingest', 'new_sesh')
+    task = session._get_task_update_session('ingest', 'new_sesh')
     assert session._session_id == 'new_sesh'
-    assert task._session_id == 'test:sessions:old_sesh'
+    assert task._session_id == 'stellar:coordinator:sessions:old_sesh'
     assert task._r['host'] == 'localhost'
     assert task._r['port'] == 6379
