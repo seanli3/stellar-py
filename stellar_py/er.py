@@ -12,9 +12,9 @@ class StellarERPayload(Payload):
     """Payload to start an ER task
 
     """
-    def __init__(self, session_id: str, input_dir: str, params: Dict[str, str], label: str, auto: bool = False):
+    def __init__(self, session_id: str, input_dir: str, params: Dict[str, str], label: str):
         # TODO: update when finalised
-        Payload.__init__(self, session_id, label, auto)
+        Payload.__init__(self, session_id, label)
         self.input = input_dir
         self.output = "pred/"
         self.parameters = params
