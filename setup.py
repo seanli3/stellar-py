@@ -12,6 +12,6 @@ setup(name='stellar-py',
       setup_requires=['pytest-runner'],
       tests_require=['pytest'],
       extras_require={
-            'testing': ['httpretty'],
+            'testing': ['httpretty', 'coveralls'],
       },
       packages=find_packages())
