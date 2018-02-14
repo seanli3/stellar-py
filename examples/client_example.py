@@ -6,26 +6,26 @@ ss = st.create_session(url="https://0891ed59-c6d6-41e5-92ef-c67647d5370d.mock.ps
 
 # create graph schema
 schema = st.create_graph_schema()
-schema.add_vertex_class(
+schema.add_node_type(
     name='Author',
-    properties={
+    attribute_types={
         'extref_id': 'string',
         'type': 'string',
         'name': 'string'
     }
 )
-schema.add_edge_class(
+schema.add_edge_type(
     name='IsSameAs',
-    src_class='Author',
-    dst_class='Author'
+    src_type='Author',
+    dst_type='Author'
 )
 
 # use schema to configure data sources
 src1 = st.new_data_source(path='nodes.csv')
-src1.add_vertex_mapping(
-    schema.vertex['Author'].create_mapping(
+src1.add_node_mapping(
+    schema.node['Author'].create_mapping(
         vertex_id='Id',
-        properties={
+        attributes={
             'extref_id': 'Extref_Id',
             'type': 'Type',
             'name': 'Label'
@@ -54,7 +54,7 @@ graph_er = ss.er(graph=graph_ingest, label='imdb_er')
 # df = ss.embedder(graph=graph_er)
 
 # node attr inference
-graph_nai = ss.nai(graph=graph_er, params={}, label='imdb_nai')
+# graph_nai = ss.nai(graph=graph_er, params={}, label='imdb_nai')
 
 # graph to networkx
 # TODO
