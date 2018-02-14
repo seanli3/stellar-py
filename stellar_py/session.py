@@ -10,7 +10,7 @@ import requests
 import redis
 import polling
 import json
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from stellar_py.ingestion import StellarIngestPayload, GraphSchema, DataSource
 from stellar_py.nai import StellarNAIPayload
@@ -188,7 +188,7 @@ class StellarSession:
         task = self.ingest_start(schema, sources, label)
         res = task.wait_for_result()
         if res.success:
-            return StellarGraph(res.dir)
+            return StellarGraph(res.dir, label)
         else:
             raise SessionError(500, res.reason)
 
@@ -218,37 +218,44 @@ class StellarSession:
         task = self.er_start(graph, params, label)
         res = task.wait_for_result()
         if res.success:
-            return StellarGraph(res.dir)
+            return StellarGraph(res.dir, label)
         else:
             raise SessionError(500, res.reason)
 
-    def nai_start(self, graph: StellarGraph, params: Dict[str, str], label: str) -> StellarTask:
+    def nai_start(self, graph: StellarGraph, target_attribute: str, node_type: str, attributes_to_ignore: List[str],
+                  label: str) -> StellarTask:
         """Start an Node Attribute Inference session
 
-        :param graph:       Input StellarGraph object
-        :param params:      Parameters for NAI
-        :param label:       Label to be assigned to output graph
-        :return:            StellarTask
+        :param graph:               Input StellarGraph object
+        :param target_attribute     Attribute to infer
+        :param node_type            Type of node to infer attributes on
+        :param attributes_to_ignore Attributes to ignore
+        :param label:               Label to be assigned to output graph
+        :return:                    StellarTask
         """
-        payload = StellarNAIPayload(self._session_id, graph.path, params, label).to_json()
+        payload = StellarNAIPayload(self._session_id, graph, target_attribute, node_type, attributes_to_ignore,
+                                    label).to_json()
         r = self._post(self._ENDPOINT_NAI_START, payload)
         if r.status_code == 200:
             return self._get_task_update_session(self._TASK_NAI, r.json()['sessionId'])
         else:
             raise SessionError(r.status_code, r.reason)
 
-    def nai(self, graph: StellarGraph, params: Dict[str, str], label: str = 'nai') -> StellarGraph:
+    def nai(self, graph: StellarGraph, target_attribute: str, node_type: str,
+            attributes_to_ignore: Optional[List[str]] = None, label: str = 'nai') -> StellarGraph:
         """Start and wait for an Node Attribute Inference session to produce graph
 
-        :param graph:       Input StellarGraph object
-        :param params:      Parameters for NAI
-        :param label:       Label to be assigned to output graph
-        :return:            StellarGraph
+        :param graph:               Input StellarGraph object
+        :param target_attribute     Attribute to infer
+        :param node_type            Type of node to infer attributes on
+        :param attributes_to_ignore Attributes to ignore
+        :param label:               Label to be assigned to output graph
+        :return:                    StellarGraph
         """
-        task = self.nai_start(graph, params, label)
+        task = self.nai_start(graph, target_attribute, node_type, attributes_to_ignore or [], label)
         res = task.wait_for_result()
         if res.success:
-            return StellarGraph(res.dir)
+            return StellarGraph(res.dir, graph.label)  # NAI uses same label instead of creating new graph
         else:
             raise SessionError(500, res.reason)
 
