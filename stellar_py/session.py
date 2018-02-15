@@ -153,7 +153,6 @@ class StellarSession:
     def _get_task_update_session(self, task_name: str, session_id_new: str) -> StellarTask:
         """Create a reference to a newly created task, and update stale session with new session ID
 
-        :param session_prefix:  Prefix string specific to session key
         :param task_name:       Task name
         :param session_id_new:  New session ID
         :return:                StellarTask
@@ -173,7 +172,7 @@ class StellarSession:
         payload = StellarIngestPayload(self._session_id, schema, sources, label).to_json()
         r = self._post(self._ENDPOINT_INGESTOR_START, payload)
         if r.status_code == 200:
-            return self._get_task_update_session(self._TASK_INGESTOR, r.json()['sessionId'])
+            return self._get_task_update_session(self._TASK_INGESTOR, self._session_id)
         else:
             raise SessionError(r.status_code, r.reason)
 
@@ -203,7 +202,7 @@ class StellarSession:
         payload = StellarERPayload(self._session_id, graph.path, params, label).to_json()
         r = self._post(self._ENDPOINT_ER_START, payload)
         if r.status_code == 200:
-            return self._get_task_update_session(self._TASK_ER, r.json()['sessionId'])
+            return self._get_task_update_session(self._TASK_ER, self._session_id)
         else:
             raise SessionError(r.status_code, r.reason)
 
@@ -237,7 +236,7 @@ class StellarSession:
                                     label).to_json()
         r = self._post(self._ENDPOINT_NAI_START, payload)
         if r.status_code == 200:
-            return self._get_task_update_session(self._TASK_NAI, r.json()['sessionId'])
+            return self._get_task_update_session(self._TASK_NAI, self._session_id)
         else:
             raise SessionError(r.status_code, r.reason)
 
