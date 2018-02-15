@@ -61,7 +61,7 @@ class StellarTask:
 
     _STATUS_COMPLETE = 'completed'
     _STATUS_ABORT = 'aborted'
-    _REDIS_PREFIX = 'stellar:coordinator:sessions:'
+    _REDIS_PREFIX = 'coordinator:sessions:'
 
     def __init__(self, url: str, port: int, name: str, session_id: str) -> None:
         """Initialise
