@@ -88,7 +88,7 @@ class StellarTask:
         :return: true if done
         """
         status = self.check_status()
-        return (status == self._STATUS_COMPLETE) or (status == self._STATUS_ABORT)
+        return (self._STATUS_COMPLETE in status) or (self._STATUS_ABORT in status)
 
     def wait_for_result(self) -> StellarResult:
         """Poll status until result is available then create result
