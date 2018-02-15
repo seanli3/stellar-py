@@ -19,6 +19,7 @@ class Payload:
         """
         self.sessionId = session_id
         self.label = label
+        self.auto = 'false'
 
     def to_json(self) -> str:
         """Turn payload into JSON string
