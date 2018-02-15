@@ -105,7 +105,7 @@ class StellarSession:
     """
 
     _ENDPOINT_INIT = 'init'  # TODO: update when finalised
-    _ENDPOINT_INGESTOR_START = 'ingestor/start'
+    _ENDPOINT_INGESTOR_START = 'ingest/start'
     _ENDPOINT_ER_START = 'er/start'  # TODO: update when finalised
     _ENDPOINT_NAI_START = 'nai/start'
 
