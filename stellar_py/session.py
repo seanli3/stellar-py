@@ -104,24 +104,24 @@ class StellarSession:
 
     """
 
-    _ENDPOINT_INIT = 'session/create'  # TODO: update when finalised
+    _ENDPOINT_INIT = 'init'  # TODO: update when finalised
     _ENDPOINT_INGESTOR_START = 'ingestor/start'
     _ENDPOINT_ER_START = 'er/start'  # TODO: update when finalised
-    _ENDPOINT_NAI_START = 'nai/tasks'
+    _ENDPOINT_NAI_START = 'nai/start'
 
     _TASK_INGESTOR = 'ingest'
     _TASK_ER = 'er'
     _TASK_NAI = 'nai'
 
-    def __init__(self, url: str, redis_url: str = 'localhost', redis_port: int = 6379) -> None:
+    def __init__(self, url: str, port: int, redis_url: str = 'localhost', redis_port: int = 6379) -> None:
         """Create a Stellar Session Object
 
         :param url:         Stellar Coordinator URL
         :param redis_url:   Redis Server URL
         :param redis_port:  Redis Server Port
         """
-        self._url = url
-        self._redis_url = redis_url  # TODO: update when finalised
+        self._url = "http://{}:{}".format(url, port)
+        self._redis_url = url  # TODO: update when finalised
         self._redis_port = redis_port  # TODO: update when finalised
         response = self._get(self._ENDPOINT_INIT)
         if response.status_code == 200:
@@ -260,10 +260,11 @@ class StellarSession:
             raise SessionError(500, res.reason)
 
 
-def create_session(url: str) -> StellarSession:
+def create_session(url: str, port: int = 8000) -> StellarSession:
     """Create a new Stellar Session
 
     :param url:     Stellar Coordinator URL
+    :param port:    Stellar Coordinator port
     :return:        new session
     """
-    return StellarSession(url)
+    return StellarSession(url, port)

@@ -66,7 +66,7 @@ def test_to_networkx():
 
 
 def test_to_networkx_with_label():
-    graph = StellarGraph(EPGM_PATH).to_networkx(inc_label_as='my_label')
+    graph = StellarGraph(EPGM_PATH).to_networkx(inc_type_as='my_label')
     assert graph.number_of_nodes() == 7
     assert graph.number_of_edges() == 11
     assert sum(attr['my_label'] == 'Location' for _, attr in graph.nodes(data=True)) == 2

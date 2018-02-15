@@ -62,13 +62,13 @@ class StellarGraph:
                                if graph_id in e['meta']['graphs']]
         return graph_dict
 
-    def to_networkx(self, inc_label_as: Optional[str] = None) -> nx.MultiDiGraph:
+    def to_networkx(self, inc_type_as: Optional[str] = None) -> nx.MultiDiGraph:
         """Load graph with networkx
 
-        :param inc_label_as:    include label as an attribute
+        :param inc_type_as:    include label as an attribute
         :return:                networkx MultiDiGraph
         """
-        graph_dict = self._load_graph(meta_keys={inc_label_as: 'label'}) if inc_label_as else self._load_graph()
+        graph_dict = self._load_graph(meta_keys={inc_type_as: 'label'}) if inc_type_as else self._load_graph()
         g = nx.MultiDiGraph()
         g.add_nodes_from(graph_dict['vertices'])
         g.add_edges_from(graph_dict['edges'])
