@@ -46,7 +46,7 @@ class StellarResult:
         :param payload:     Payload dict from Redis
         """
         self.status = status
-        if status == 'completed':
+        if 'completed' in status:
             self.success = True
             self.dir = payload['output']
         else:
@@ -172,7 +172,7 @@ class StellarSession:
         payload = StellarIngestPayload(self._session_id, schema, sources, label).to_json()
         r = self._post(self._ENDPOINT_INGESTOR_START, payload)
         if r.status_code == 200:
-            return self._get_task_update_session(self._TASK_INGESTOR, r.json()['sessionId'])
+            return self._get_task_update_session(self._TASK_INGESTOR, self._session_id)
         else:
             raise SessionError(r.status_code, r.reason)
 
@@ -236,7 +236,7 @@ class StellarSession:
                                     label).to_json()
         r = self._post(self._ENDPOINT_NAI_START, payload)
         if r.status_code == 200:
-            return self._get_task_update_session(self._TASK_NAI, r.json()['sessionId'])
+            return self._get_task_update_session(self._TASK_NAI, self._session_id)
         else:
             raise SessionError(r.status_code, r.reason)
 
