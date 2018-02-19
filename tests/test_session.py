@@ -63,27 +63,18 @@ def test_task_wait_for_result(monkeypatch):
 
 @httpretty.activate
 def test_session_init():
-    httpretty.register_uri(httpretty.GET, 'http://12341234/init', body=u'{"sessionId": "new_sesh"}')
-    session = StellarSession('http://12341234')
-    assert session._session_id == 'new_sesh'
-    assert session._url == 'http://12341234'
-    assert session._redis_url == 'localhost'
+    session = StellarSession('12.34.12.34', 3000)
+    session2 = StellarSession('localhost', 5000)
+    assert session._url == 'http://12.34.12.34:3000'
+    assert session._redis_url == '12.34.12.34'
     assert session._redis_port == 6379
-
-
-@httpretty.activate
-def test_session_init_server_error():
-    httpretty.register_uri(httpretty.GET, 'http://12341234/init',
-                           body=u'{"reason": "server error"}', status=500)
-    with pytest.raises(SessionError):
-        StellarSession('http://12341234')
+    assert session2._url == 'http://localhost:5000'
 
 
 @httpretty.activate
 def test_session_get():
-    httpretty.register_uri(httpretty.GET, 'http://12341234/init', body=u'{"sessionId": "new_sesh"}')
-    httpretty.register_uri(httpretty.GET, 'http://12341234/endpt', body=u'{"key": "value", "key2": "value2"}')
-    session = StellarSession('http://12341234')
+    httpretty.register_uri(httpretty.GET, 'http://12341234:5000/endpt', body=u'{"key": "value", "key2": "value2"}')
+    session = StellarSession('12341234', 5000)
     response = session._get('endpt').json()
     assert response['key'] == 'value'
     assert response['key2'] == 'value2'
@@ -91,22 +82,42 @@ def test_session_get():
 
 @httpretty.activate
 def test_session_post():
-    httpretty.register_uri(httpretty.GET, 'http://12341234/init', body=u'{"sessionId": "new_sesh"}')
-    httpretty.register_uri(httpretty.POST, 'http://12341234/endpt', body=u'{"key": "value", "key2": "value2"}')
-    session = StellarSession('http://12341234')
+    httpretty.register_uri(httpretty.POST, 'http://12341234:5000/endpt', body=u'{"key": "value", "key2": "value2"}')
+    session = StellarSession('12341234', 5000)
     response = session._post('endpt', u'{"somekey": "someval"}').json()
     assert response['key'] == 'value'
     assert response['key2'] == 'value2'
 
 
 @httpretty.activate
-def test_session_get_task_update_session(monkeypatch):
-    httpretty.register_uri(httpretty.GET, 'http://12341234/init', body=u'{"sessionId": "old_sesh"}')
-    session = StellarSession('http://12341234')
-    monkeypatch.setattr(redis, 'StrictRedis',
-                        lambda **kwargs: kwargs)
-    task = session._get_task_update_session('ingest', 'new_sesh')
-    assert session._session_id == 'new_sesh'
-    assert task._session_id == 'coordinator:sessions:old_sesh'
-    assert task._r['host'] == 'localhost'
-    assert task._r['port'] == 6379
+def test_get_session_id():
+    httpretty.register_uri(httpretty.GET, 'http://12.12.12.12:8000/init', body=u'{"sessionId": "test_session"}')
+    session = StellarSession('12.12.12.12', 8000)
+    session_id = session._get_session_id()
+    assert session_id == 'test_session'
+
+
+@httpretty.activate
+def test_get_session_id_empty_resp():
+    httpretty.register_uri(httpretty.GET, 'http://12.12.12.12:8000/init', body="")
+    session = StellarSession('12.12.12.12', 8000)
+    with pytest.raises(SessionError):
+        session._get_session_id()
+
+
+@httpretty.activate
+def test_get_session_id_key_error():
+    httpretty.register_uri(httpretty.GET, 'http://12.12.12.12:8000/init', body=u'{"wrong":"answer"}')
+    session = StellarSession('12.12.12.12', 8000)
+    with pytest.raises(SessionError):
+        session._get_session_id()
+
+
+@httpretty.activate
+def test_start():
+    httpretty.register_uri(httpretty.GET, 'http://12.12.12.12:8000/init', body=u'{"sessionId":"test_session"}')
+    httpretty.register_uri(httpretty.POST, 'http://12.12.12.12:8000/test_task/start')
+    session = StellarSession('12.12.12.12', 8000)
+    task = session._start('test_task', lambda sid: Payload(sid, "test_label"))
+    assert task._session_id == 'coordinator:sessions:test_session'
+    assert task._name == 'test_task'

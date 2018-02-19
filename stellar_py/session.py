@@ -10,12 +10,14 @@ import requests
 import redis
 import polling
 import json
-from typing import Dict, List, Optional
+import re
+from typing import Dict, List, Optional, Callable
 
 from stellar_py.ingestion import StellarIngestPayload, GraphSchema, DataSource
 from stellar_py.nai import StellarNAIPayload
 from stellar_py.er import StellarERPayload
 from stellar_py.graph import StellarGraph
+from stellar_py.payload import Payload
 
 
 class SessionError(Exception):
@@ -105,29 +107,20 @@ class StellarSession:
     """
 
     _ENDPOINT_INIT = 'init'
-    _ENDPOINT_INGESTOR_START = 'ingest/start'
-    _ENDPOINT_ER_START = 'er/start'
-    _ENDPOINT_NAI_START = 'nai/start'
-
-    _TASK_INGESTOR = 'ingest'
+    _TASK_INGEST = 'ingest'
     _TASK_ER = 'er'
     _TASK_NAI = 'nai'
 
-    def __init__(self, url: str, redis_url: str = 'localhost', redis_port: int = 6379) -> None:
+    def __init__(self, url: str, port: int, redis_url: Optional[str] = None, redis_port: int = 6379) -> None:
         """Create a Stellar Session Object
 
         :param url:         Stellar Coordinator URL
         :param redis_url:   Redis Server URL
         :param redis_port:  Redis Server Port
         """
-        self._url = url
-        self._redis_url = redis_url  # TODO: update when finalised
+        self._url = "http://{}:{}".format(url, port)
+        self._redis_url = redis_url or url
         self._redis_port = redis_port  # TODO: update when finalised
-        response = self._get(self._ENDPOINT_INIT)
-        if response.status_code == 200:
-            self._session_id = response.json()['sessionId']
-        else:
-            raise SessionError(response.status_code, response.json()['reason'])
 
     def _get(self, endpoint: str, params: dict = None) -> requests.Response:
         """GET request to the coordinator/endpoint
@@ -150,16 +143,37 @@ class StellarSession:
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
         return requests.post(url, data=data, headers=headers)
 
-    def _get_task_update_session(self, task_name: str, session_id_new: str) -> StellarTask:
-        """Create a reference to a newly created task, and update stale session with new session ID
+    def _get_session_id(self) -> str:
+        """Obtain new session ID from Stellar coordinator INIT endpoint
 
-        :param task_name:       Task name
-        :param session_id_new:  New session ID
+        :return: new session ID
+        """
+        response = self._get(self._ENDPOINT_INIT)
+        if response.status_code == 200:
+            try:
+                return response.json()['sessionId']
+            except json.JSONDecodeError:
+                raise SessionError(500, "Failed to obtain session ID. Could not decode response from Stellar.")
+            except KeyError:
+                raise SessionError(500, "Failed to obtain session ID. Response from Stellar does not contain "
+                                        "sessionId field.")
+        else:
+            raise SessionError(response.status_code, response.json()['reason'])
+
+    def _start(self, task_name: str, create_payload: Callable[[str], Payload]) -> StellarTask:
+        """Initialise a session and start a task
+
+        :param task_name:       name of task
+        :param create_payload:  callable to create payload with session ID
         :return:                StellarTask
         """
-        task = StellarTask(self._redis_url, self._redis_port, task_name, self._session_id)
-        self._session_id = session_id_new
-        return task
+        session_id = self._get_session_id()
+        payload = create_payload(session_id).to_json()
+        r = self._post(task_name + '/start', payload)
+        if r.status_code == 200:
+            return StellarTask(self._redis_url, self._redis_port, task_name, session_id)
+        else:
+            raise SessionError(r.status_code, r.reason)
 
     def ingest_start(self, schema: GraphSchema, sources: List[DataSource], label: str) -> StellarTask:
         """Start an ingestion session
@@ -169,12 +183,7 @@ class StellarSession:
         :param label:       Label to be assigned to output graph
         :return:            StellarTask
         """
-        payload = StellarIngestPayload(self._session_id, schema, sources, label).to_json()
-        r = self._post(self._ENDPOINT_INGESTOR_START, payload)
-        if r.status_code == 200:
-            return self._get_task_update_session(self._TASK_INGESTOR, r.json()['sessionId'])
-        else:
-            raise SessionError(r.status_code, r.reason)
+        return self._start(self._TASK_INGEST, lambda sid: StellarIngestPayload(sid, schema, sources, label))
 
     def ingest(self, schema: GraphSchema, sources: List[DataSource], label: str = 'ingest') -> StellarGraph:
         """Start and wait for an ingestion session to produce graph
@@ -199,12 +208,7 @@ class StellarSession:
         :param label:       Label to be assigned to output graph
         :return:            StellarTask
         """
-        payload = StellarERPayload(self._session_id, graph.path, params, label).to_json()
-        r = self._post(self._ENDPOINT_ER_START, payload)
-        if r.status_code == 200:
-            return self._get_task_update_session(self._TASK_ER, r.json()['sessionId'])
-        else:
-            raise SessionError(r.status_code, r.reason)
+        return self._start(self._TASK_ER, lambda sid: StellarERPayload(sid, graph.path, params, label))
 
     def er(self, graph: StellarGraph, params: Dict[str, str], label: str = 'er') -> StellarGraph:
         """Start and wait for an Entity Resolution session to produce graph
@@ -232,13 +236,8 @@ class StellarSession:
         :param label:               Label to be assigned to output graph
         :return:                    StellarTask
         """
-        payload = StellarNAIPayload(self._session_id, graph, target_attribute, node_type, attributes_to_ignore,
-                                    label).to_json()
-        r = self._post(self._ENDPOINT_NAI_START, payload)
-        if r.status_code == 200:
-            return self._get_task_update_session(self._TASK_NAI, r.json()['sessionId'])
-        else:
-            raise SessionError(r.status_code, r.reason)
+        return self._start(self._TASK_NAI, lambda sid: StellarNAIPayload(sid, graph, target_attribute, node_type,
+                                                                         attributes_to_ignore, label))
 
     def nai(self, graph: StellarGraph, target_attribute: str, node_type: str,
             attributes_to_ignore: Optional[List[str]] = None, label: str = 'nai') -> StellarGraph:
@@ -261,10 +260,12 @@ class StellarSession:
             raise SessionError(500, res.reason)
 
 
-def create_session(url: str) -> StellarSession:
+def create_session(url: str, port: int = 8000) -> StellarSession:
     """Create a new Stellar Session
 
     :param url:     Stellar Coordinator URL
+    :param port:    Stellar Coordinator Port
     :return:        new session
     """
-    return StellarSession(url)
+    m = re.match("([a-zA-Z]+://)?([-a-zA-Z0-9@%_+.]+)(:[0-9]{1,4})?", url)
+    return StellarSession(m.group(2), port if not m.group(3) else int(m.group(3)[1:]))
