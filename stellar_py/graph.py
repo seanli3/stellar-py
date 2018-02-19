@@ -17,7 +17,7 @@ GraphDict = Dict[str, Tuple]
 class StellarGraph:
     """Reference to a Stellar Graph
     """
-    def __init__(self, path: str, label: str = ''):
+    def __init__(self, path: str, label: str):
         self.path = path
         self.label = label
 

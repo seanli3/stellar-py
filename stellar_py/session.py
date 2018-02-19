@@ -255,6 +255,8 @@ class StellarSession:
         task = self.nai_start(graph, target_attribute, node_type, attributes_to_ignore or [], label)
         res = task.wait_for_result()
         if res.success:
+            print("WARNING: Current version does not allow NAI to update its graph label. "
+                  "Keeping original label: {}".format(graph.label))
             return StellarGraph(res.dir, graph.label)  # NAI uses same label instead of creating new graph
         else:
             raise SessionError(500, res.reason)
