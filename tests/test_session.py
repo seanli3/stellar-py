@@ -63,7 +63,7 @@ def test_task_wait_for_result(monkeypatch):
 
 @httpretty.activate
 def test_session_init():
-    httpretty.register_uri(httpretty.GET, 'http://12341234/session/create', body=u'{"sessionId": "new_sesh"}')
+    httpretty.register_uri(httpretty.GET, 'http://12341234/init', body=u'{"sessionId": "new_sesh"}')
     session = StellarSession('http://12341234')
     assert session._session_id == 'new_sesh'
     assert session._url == 'http://12341234'
@@ -73,7 +73,7 @@ def test_session_init():
 
 @httpretty.activate
 def test_session_init_server_error():
-    httpretty.register_uri(httpretty.GET, 'http://12341234/session/create',
+    httpretty.register_uri(httpretty.GET, 'http://12341234/init',
                            body=u'{"reason": "server error"}', status=500)
     with pytest.raises(SessionError):
         StellarSession('http://12341234')
@@ -81,7 +81,7 @@ def test_session_init_server_error():
 
 @httpretty.activate
 def test_session_get():
-    httpretty.register_uri(httpretty.GET, 'http://12341234/session/create', body=u'{"sessionId": "new_sesh"}')
+    httpretty.register_uri(httpretty.GET, 'http://12341234/init', body=u'{"sessionId": "new_sesh"}')
     httpretty.register_uri(httpretty.GET, 'http://12341234/endpt', body=u'{"key": "value", "key2": "value2"}')
     session = StellarSession('http://12341234')
     response = session._get('endpt').json()
@@ -91,7 +91,7 @@ def test_session_get():
 
 @httpretty.activate
 def test_session_post():
-    httpretty.register_uri(httpretty.GET, 'http://12341234/session/create', body=u'{"sessionId": "new_sesh"}')
+    httpretty.register_uri(httpretty.GET, 'http://12341234/init', body=u'{"sessionId": "new_sesh"}')
     httpretty.register_uri(httpretty.POST, 'http://12341234/endpt', body=u'{"key": "value", "key2": "value2"}')
     session = StellarSession('http://12341234')
     response = session._post('endpt', u'{"somekey": "someval"}').json()
@@ -101,12 +101,12 @@ def test_session_post():
 
 @httpretty.activate
 def test_session_get_task_update_session(monkeypatch):
-    httpretty.register_uri(httpretty.GET, 'http://12341234/session/create', body=u'{"sessionId": "old_sesh"}')
+    httpretty.register_uri(httpretty.GET, 'http://12341234/init', body=u'{"sessionId": "old_sesh"}')
     session = StellarSession('http://12341234')
     monkeypatch.setattr(redis, 'StrictRedis',
                         lambda **kwargs: kwargs)
     task = session._get_task_update_session('ingest', 'new_sesh')
     assert session._session_id == 'new_sesh'
-    assert task._session_id == 'stellar:coordinator:sessions:old_sesh'
+    assert task._session_id == 'coordinator:sessions:old_sesh'
     assert task._r['host'] == 'localhost'
     assert task._r['port'] == 6379

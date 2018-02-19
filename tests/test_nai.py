@@ -9,8 +9,8 @@ import pytest
 
 
 stellar_addr = "http://localhost:3000"
-stellar_addr_nai = stellar_addr + "/nai/tasks"
-stellar_addr_session = stellar_addr + "/session/create"
+stellar_addr_nai = stellar_addr + "/nai/start"
+stellar_addr_session = stellar_addr + "/init"
 
 
 def test_nai_payload():
@@ -33,7 +33,7 @@ def test_nai_start():
     httpretty.register_uri(httpretty.GET, stellar_addr_session, body=u'{"sessionId": "dummy_session_id"}')
     ss = st.create_session(url=stellar_addr)
     task = ss.nai_start(StellarGraph('graph.epgm', 'test_nai_ori'), 'target_attr', 'type', [], 'test_nai')
-    assert task._session_id == "stellar:coordinator:sessions:dummy_session_id"
+    assert task._session_id == "coordinator:sessions:dummy_session_id"
     assert ss._session_id == "melon"
 
 

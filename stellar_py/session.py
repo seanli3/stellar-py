@@ -46,7 +46,7 @@ class StellarResult:
         :param payload:     Payload dict from Redis
         """
         self.status = status
-        if status == 'completed':
+        if 'completed' in status:
             self.success = True
             self.dir = payload['output']
         else:
@@ -61,7 +61,7 @@ class StellarTask:
 
     _STATUS_COMPLETE = 'completed'
     _STATUS_ABORT = 'aborted'
-    _REDIS_PREFIX = 'stellar:coordinator:sessions:'
+    _REDIS_PREFIX = 'coordinator:sessions:'
 
     def __init__(self, url: str, port: int, name: str, session_id: str) -> None:
         """Initialise
@@ -88,7 +88,7 @@ class StellarTask:
         :return: true if done
         """
         status = self.check_status()
-        return (status == self._STATUS_COMPLETE) or (status == self._STATUS_ABORT)
+        return (self._STATUS_COMPLETE in status) or (self._STATUS_ABORT in status)
 
     def wait_for_result(self) -> StellarResult:
         """Poll status until result is available then create result
@@ -104,10 +104,10 @@ class StellarSession:
 
     """
 
-    _ENDPOINT_INIT = 'session/create'  # TODO: update when finalised
-    _ENDPOINT_INGESTOR_START = 'ingestor/start'
-    _ENDPOINT_ER_START = 'er/start'  # TODO: update when finalised
-    _ENDPOINT_NAI_START = 'nai/tasks'
+    _ENDPOINT_INIT = 'init'
+    _ENDPOINT_INGESTOR_START = 'ingest/start'
+    _ENDPOINT_ER_START = 'er/start'
+    _ENDPOINT_NAI_START = 'nai/start'
 
     _TASK_INGESTOR = 'ingest'
     _TASK_ER = 'er'
@@ -153,7 +153,6 @@ class StellarSession:
     def _get_task_update_session(self, task_name: str, session_id_new: str) -> StellarTask:
         """Create a reference to a newly created task, and update stale session with new session ID
 
-        :param session_prefix:  Prefix string specific to session key
         :param task_name:       Task name
         :param session_id_new:  New session ID
         :return:                StellarTask
