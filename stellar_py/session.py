@@ -92,12 +92,16 @@ class StellarTask:
         status = self.check_status()
         return (self._STATUS_COMPLETE in status) or (self._STATUS_ABORT in status)
 
-    def wait_for_result(self) -> StellarResult:
+    def wait_for_result(self, timeout: float = 0) -> StellarResult:
         """Poll status until result is available then create result
 
+        :param timeout:     polling timeout in seconds. Set to zero to poll forever
         :return:    StellarResult
         """
-        polling.poll(self.is_done, step=1, poll_forever=True)
+        if timeout <= 0:
+            polling.poll(self.is_done, step=1, poll_forever=True)
+        else:
+            polling.poll(self.is_done, step=1, timeout=timeout)
         return StellarResult(self.check_status(), json.loads(self._r.get(self._session_id))[self._name])
 
 
@@ -185,16 +189,18 @@ class StellarSession:
         """
         return self._start(self._TASK_INGEST, lambda sid: StellarIngestPayload(sid, schema, sources, label))
 
-    def ingest(self, schema: GraphSchema, sources: List[DataSource], label: str = 'ingest') -> StellarGraph:
+    def ingest(self, schema: GraphSchema, sources: List[DataSource], label: str = 'ingest',
+               timeout: float = 0) -> StellarGraph:
         """Start and wait for an ingestion session to produce graph
 
         :param schema:      Graph schema
         :param sources:     List of data-source mappings
         :param label:       Label to be assigned to output graph
+        :param timeout:     Timeout in seconds. Set to zero to poll forever.
         :return:            StellarGraph
         """
         task = self.ingest_start(schema, sources, label)
-        res = task.wait_for_result()
+        res = task.wait_for_result(timeout)
         if res.success:
             return StellarGraph(res.dir, label)
         else:
@@ -211,16 +217,17 @@ class StellarSession:
         return self._start(self._TASK_ER, lambda sid: StellarERPayload(sid, graph, attribute_thresholds, label))
 
     def er(self, graph: StellarGraph, attribute_thresholds: Optional[Dict[str, float]] = None,
-           label: str = 'er') -> StellarGraph:
+           label: str = 'er', timeout: float = 0) -> StellarGraph:
         """Start and wait for an Entity Resolution session to produce graph
 
         :param graph:       Input StellarGraph object
         :param attribute_thresholds:      thresholds for each attribute as a dict - normalised between 0 and 1
         :param label:       Label to be assigned to output graph
+        :param timeout:     Timeout in seconds. Set to zero to poll forever.
         :return:            StellarGraph
         """
         task = self.er_start(graph, attribute_thresholds or {}, label)
-        res = task.wait_for_result()
+        res = task.wait_for_result(timeout)
         if res.success:
             return StellarGraph(res.dir, label)
         else:
@@ -241,7 +248,7 @@ class StellarSession:
                                                                          attributes_to_ignore, label))
 
     def nai(self, graph: StellarGraph, target_attribute: str, node_type: str,
-            attributes_to_ignore: Optional[List[str]] = None, label: str = 'nai') -> StellarGraph:
+            attributes_to_ignore: Optional[List[str]] = None, label: str = 'nai', timeout: float = 0) -> StellarGraph:
         """Start and wait for an Node Attribute Inference session to produce graph
 
         :param graph:               Input StellarGraph object
@@ -249,10 +256,11 @@ class StellarSession:
         :param node_type            Type of node to infer attributes on
         :param attributes_to_ignore Attributes to ignore
         :param label:               Label to be assigned to output graph
+        :param timeout:             Timeout in seconds. Set to zero to poll forever.
         :return:                    StellarGraph
         """
         task = self.nai_start(graph, target_attribute, node_type, attributes_to_ignore or [], label)
-        res = task.wait_for_result()
+        res = task.wait_for_result(timeout)
         if res.success:
             print("WARNING: Current version does not allow NAI to update its graph label. "
                   "Keeping original label: {}".format(graph.label))

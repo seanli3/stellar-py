@@ -61,6 +61,16 @@ def test_task_wait_for_result(monkeypatch):
     assert result.dir == 'test_path.epgm'
 
 
+def test_task_wait_for_result_timeout(monkeypatch):
+    monkeypatch.setattr(
+        redis.StrictRedis,
+        'get',
+        lambda *_: u'{"status": "running", "ingest": {"output": "test_path.epgm", "error":""}}'
+    )
+    with pytest.raises(polling.TimeoutException):
+        result = get_task().wait_for_result(timeout=0.1)
+
+
 @httpretty.activate
 def test_session_init():
     session = StellarSession('12.34.12.34', 3000)
