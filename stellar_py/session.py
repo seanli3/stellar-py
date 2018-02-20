@@ -200,25 +200,26 @@ class StellarSession:
         else:
             raise SessionError(500, res.reason)
 
-    def er_start(self, graph: StellarGraph, params: Dict[str, str], label: str) -> StellarTask:
+    def er_start(self, graph: StellarGraph, attribute_thresholds: Dict[str, float], label: str) -> StellarTask:
         """Start an Entity Resolution session
 
         :param graph:       Input StellarGraph object
-        :param params:      Parameters for ER
+        :param attribute_thresholds:      thresholds for each attribute as a dict - normalised between 0 and 1
         :param label:       Label to be assigned to output graph
         :return:            StellarTask
         """
-        return self._start(self._TASK_ER, lambda sid: StellarERPayload(sid, graph.path, params, label))
+        return self._start(self._TASK_ER, lambda sid: StellarERPayload(sid, graph, attribute_thresholds, label))
 
-    def er(self, graph: StellarGraph, params: Dict[str, str], label: str = 'er') -> StellarGraph:
+    def er(self, graph: StellarGraph, attribute_thresholds: Optional[Dict[str, float]] = None,
+           label: str = 'er') -> StellarGraph:
         """Start and wait for an Entity Resolution session to produce graph
 
         :param graph:       Input StellarGraph object
-        :param params:      Parameters for ER
+        :param attribute_thresholds:      thresholds for each attribute as a dict - normalised between 0 and 1
         :param label:       Label to be assigned to output graph
         :return:            StellarGraph
         """
-        task = self.er_start(graph, params, label)
+        task = self.er_start(graph, attribute_thresholds or {}, label)
         res = task.wait_for_result()
         if res.success:
             return StellarGraph(res.dir, label)
