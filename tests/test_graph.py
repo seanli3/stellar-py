@@ -15,7 +15,7 @@ def test_load_epgm():
         """
         return sum(el['meta']['label'] == label for el in elems)
 
-    graph = StellarGraph(EPGM_PATH)
+    graph = StellarGraph(EPGM_PATH, "")
     epgm = graph._load_epgm()
     assert 'vertices' in epgm
     assert 'edges' in epgm
@@ -36,19 +36,19 @@ def test_load_epgm():
 
 
 def test_load_graph():
-    graph = StellarGraph(EPGM_PATH)._load_graph()
+    graph = StellarGraph(EPGM_PATH, "")._load_graph()
     assert len(graph['vertices']) == 7
     assert len(graph['edges']) == 11
 
 
 def test_load_empty_graph():
-    graph = StellarGraph(EPGM_PATH)._load_graph(index=0)
+    graph = StellarGraph(EPGM_PATH, "")._load_graph(index=0)
     assert len(graph['vertices']) == 0
     assert len(graph['edges']) == 0
 
 
 def test_load_graph_with_meta():
-    graph = StellarGraph(EPGM_PATH)._load_graph(meta_keys={'stellar_label': 'label', 'stellar_non': 'non'})
+    graph = StellarGraph(EPGM_PATH, "")._load_graph(meta_keys={'stellar_label': 'label', 'stellar_non': 'non'})
     assert len(graph['vertices']) == 7
     assert len(graph['edges']) == 11
     assert sum(attr['stellar_label'] == 'Location' for _, attr in graph['vertices']) == 2
@@ -58,7 +58,7 @@ def test_load_graph_with_meta():
 
 
 def test_to_networkx():
-    graph = StellarGraph(EPGM_PATH).to_networkx()
+    graph = StellarGraph(EPGM_PATH, "").to_networkx()
     assert graph.number_of_nodes() == 7
     assert graph.number_of_edges() == 11
     assert sum(attr.setdefault('race', '') == 'Hobbit' for _, attr in graph.nodes(data=True)) == 3
@@ -66,7 +66,7 @@ def test_to_networkx():
 
 
 def test_to_networkx_with_label():
-    graph = StellarGraph(EPGM_PATH).to_networkx(inc_label_as='my_label')
+    graph = StellarGraph(EPGM_PATH, "").to_networkx(inc_label_as='my_label')
     assert graph.number_of_nodes() == 7
     assert graph.number_of_edges() == 11
     assert sum(attr['my_label'] == 'Location' for _, attr in graph.nodes(data=True)) == 2
