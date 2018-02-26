@@ -2,8 +2,8 @@
 FROM jupyter/datascience-notebook:65f1c4bea0b2
 
 # Install stellar-py and its requirements 
-COPY ./ ./
-RUN pip install --no-cache-dir . 
+COPY stellar-py /tmp/stellar-py
+RUN pip install --no-cache-dir /tmp/stellar-py
 
 USER root
 RUN mkdir -p /data/user
