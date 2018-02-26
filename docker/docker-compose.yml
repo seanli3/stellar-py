@@ -1,0 +1,9 @@
+version: '3.0'
+services:
+    stellar-py:
+        image: stellar-py
+        ports: 
+            - 8001:8888
+        volumes:
+            - /Users/jun021/work/datasets:/data/user
+            - /Users/jun021/work/notebooks:/home/jovyan
