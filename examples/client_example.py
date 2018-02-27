@@ -47,7 +47,7 @@ graph_ingest = ss.ingest(schema=schema, sources=data_sources, label='imdb')
 # graph_ingest = ss.ingest(payload=jsonPayload)
 
 # entity resolution
-graph_er = ss.er(graph=graph_ingest, params={}, label='imdb_er')
+graph_er = ss.er(graph=graph_ingest, label='imdb_er')
 
 # node embedder
 # TODO

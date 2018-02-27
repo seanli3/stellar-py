@@ -5,8 +5,8 @@ import pytest
 import httpretty
 
 stellar_addr = "http://localhost:3000"
-stellar_addr_ingest = stellar_addr + "/ingestor/start"
-stellar_addr_session = stellar_addr + "/session/create"
+stellar_addr_ingest = stellar_addr + "/ingest/start"
+stellar_addr_session = stellar_addr + "/init"
 
 
 @pytest.fixture(scope="module")
@@ -131,13 +131,11 @@ def test_ingest_payload_ems2links():
 
 @httpretty.activate
 def test_ingest_start():
-    httpretty.register_uri(httpretty.POST, stellar_addr_ingest,
-                           body=u'{"sessionId": "melon"}')
+    httpretty.register_uri(httpretty.POST, stellar_addr_ingest)
     httpretty.register_uri(httpretty.GET, stellar_addr_session, body=u'{"sessionId": "dummy_session_id"}')
     ss = st.create_session(url=stellar_addr)
     task = ss.ingest_start(graph_schema(), [data_source()], 'test_ingest')
-    assert task._session_id == "stellar:coordinator:sessions:dummy_session_id"
-    assert ss._session_id == "melon"
+    assert task._session_id == "coordinator:sessions:dummy_session_id"
 
 
 @httpretty.activate
