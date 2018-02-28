@@ -5,7 +5,7 @@ Classes and methods related to the Ingestor module.
 """
 
 from stellar_py.payload import Payload
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Union
 
 
 class NodeMapping:
@@ -13,13 +13,15 @@ class NodeMapping:
 
     Attributes:
         node_type: type
+        path: path to source file
         node_id: column name for unique ID
         attributes: dict of {key: column}
     """
-    def __init__(self, node_type: str, node_id: str, attributes: Dict[str, str]) -> None:
+    def __init__(self, node_type: str, path: str, column: str, map_attributes: Dict[str, str]) -> None:
         self.node_type = node_type
-        self.node_id = node_id
-        self.attributes = attributes or {}
+        self.path = path
+        self.node_id = column
+        self.attributes = map_attributes or {}
 
 
 class EdgeMapping:
@@ -28,16 +30,19 @@ class EdgeMapping:
     Attributes:
         edge_type: type
         src_type: source node type
+        path: path to source file
         src: column name for source node
         dst: column name for destination node
         attributes: dict of {key: column}
     """
-    def __init__(self, edge_type: str, src_type: str, src: str, dst: str, attributes: Dict[str, str]) -> None:
+    def __init__(self, edge_type: str, src_type: str, path: str, src: str, dst: str,
+                 map_attributes: Dict[str, str]) -> None:
         self.edge_type = edge_type
         self.src_type = src_type
+        self.path = path
         self.src = src
         self.dst = dst
-        self.attributes = attributes or {}
+        self.attributes = map_attributes or {}
 
 
 class ElementType:
@@ -73,14 +78,15 @@ class NodeType(ElementType):
     def __init__(self, name: str, attribute_types: Dict[str, str]) -> None:
         ElementType.__init__(self, name, attribute_types)
 
-    def create_mapping(self, node_id: str, attributes: Optional[Dict[str, str]]=None) -> NodeMapping:
+    def create_map(self, path: str, column: str, map_attributes: Optional[Dict[str, str]]=None) -> NodeMapping:
         """Create node mapping
 
-        :param node_id:   column name containing node ID
-        :param attributes:  dict of property name to column name
-        :return:            node mapping
+        :param path:            path to source file
+        :param column:          column name containing node ID
+        :param map_attributes:  dict of property name to column name
+        :return:                node mapping
         """
-        return NodeMapping(self.name, node_id, self.validate_attributes(attributes))
+        return NodeMapping(self.name, path, column, self.validate_attributes(map_attributes))
 
 
 class EdgeType(ElementType):
@@ -97,15 +103,16 @@ class EdgeType(ElementType):
         self.src_type = src_type
         self.dst_type = dst_type
 
-    def create_mapping(self, src: str, dst: str, attributes: Optional[Dict[str, str]]=None) -> EdgeMapping:
+    def create_map(self, path: str, src: str, dst: str, map_attributes: Optional[Dict[str, str]]=None) -> EdgeMapping:
         """Create edge mapping
 
-        :param src:         column name containing source ID
-        :param dst:         column name containing destination ID
-        :param attributes:  dict of property name to column name
-        :return:            edge mapping
+        :param path:            path to source file
+        :param src:             column name containing source ID
+        :param dst:             column name containing destination ID
+        :param map_attributes:  dict of property name to column name
+        :return:                edge mapping
         """
-        return EdgeMapping(self.name, self.src_type, src, dst, self.validate_attributes(attributes))
+        return EdgeMapping(self.name, self.src_type, path, src, dst, self.validate_attributes(map_attributes))
 
 
 class GraphSchema:
@@ -113,20 +120,22 @@ class GraphSchema:
 
     """
     def __init__(self):
-        self.node = {}
-        self.edge = {}
+        self.node = {}  # type: Dict[str, NodeType]
+        self.edge = {}  # type: Dict[str, EdgeType]
 
-    def add_node_type(self, name: str, attribute_types: Optional[Dict[str, str]] = None) -> None:
+    def add_node_type(self, name: str, attribute_types: Optional[Dict[str, str]] = None):
         """Add node class definition to schema
 
         :param name:        name of node class
         :param attribute_types:  dict of attributes to their types
         """
-        if name not in self.node.keys():
-            self.node[name] = NodeType(name, attribute_types)
+        if name in self.node.keys():
+            print("WARNING: Overwriting existing node type '{}'".format(name))
+        self.node[name] = NodeType(name, attribute_types)
+        return self
 
     def add_edge_type(self, name: str, src_type: str, dst_type: str,
-                      attribute_types: Optional[Dict[str, str]] = None) -> None:
+                      attribute_types: Optional[Dict[str, str]] = None):
         """Add edge class definition to schema
 
         :param name:        name of edge class
@@ -134,33 +143,10 @@ class GraphSchema:
         :param dst_type:   name of destination node class
         :param attribute_types:  dict of attributes to their types
         """
-        if name not in self.edge.keys():
-            self.edge[name] = EdgeType(name, src_type, dst_type, attribute_types)
-
-
-class DataSource:
-    """Used to define a data source and its column mappings as graph elements and attributes
-
-    """
-    def __init__(self, path: str, node_mappings: Optional[List[NodeMapping]] = None,
-                 edge_mappings: Optional[List[EdgeMapping]] = None) -> None:
-        self.path = path
-        self.node_mappings = node_mappings or []
-        self.edge_mappings = edge_mappings or []
-
-    def add_node_mapping(self, node_mapping: NodeMapping) -> None:
-        """Add a node mapping
-
-        :param node_mapping: node mapping
-        """
-        self.node_mappings.append(node_mapping)
-
-    def add_edge_mapping(self, edge_mapping: EdgeMapping) -> None:
-        """Add an edge mapping
-
-        :param edge_mapping: edge mapping
-        """
-        self.edge_mappings.append(edge_mapping)
+        if name in self.edge.keys():
+            print("WARNING: Overwriting existing edge type '{}'".format(name))
+        self.edge[name] = EdgeType(name, src_type, dst_type, attribute_types)
+        return self
 
 
 class StellarIngestPayload(Payload):
@@ -171,20 +157,17 @@ class StellarIngestPayload(Payload):
         schema: graph schema object
         sources: list of sources and their mappings
     """
-    def __init__(self, session_id: str, schema: GraphSchema, sources: List[DataSource], label: str):
+    def __init__(self, session_id: str, schema: GraphSchema, mappings: List[Union[NodeMapping, EdgeMapping]],
+                 label: str):
         Payload.__init__(self, session_id, label)
-        self.sources = [s.path for s in sources]
+        self.sources = list(set([m.path for m in mappings]))
         self.graphSchema = {
             "classes": [self.nt2c(vc) for vc in schema.node.values()],
             "classLinks": [self.et2cl(ec) for ec in schema.edge.values()]
         }
         self.mapping = {
-            "nodes": [node for s in sources
-                      for node in
-                      self.nms2nodes(s.path, s.node_mappings)],
-            "links": [link for s in sources
-                      for link in
-                      self.ems2links(s.path, s.edge_mappings)]
+            "nodes": [self.nm2node(m) for m in mappings if isinstance(m, NodeMapping)],
+            "links": [self.em2link(m) for m in mappings if isinstance(m, EdgeMapping)]
         }
 
     @staticmethod
@@ -214,61 +197,36 @@ class StellarIngestPayload(Payload):
         }
 
     @staticmethod
-    def nms2nodes(source: str, vms: List[NodeMapping]) -> List[Dict]:
-        """Vertex mappings to "nodes" element in payload
+    def nm2node(vm: NodeMapping) -> Dict:
+        """Vertex mapping to "node"
 
-        :param source:  data source path
-        :param vms:     node mappings
-        :return:        "nodes" element in payload
+        :param vm:  node mapping
+        :return:    "node" element in payload
         """
-        def nm2node(vm: NodeMapping) -> Dict:
-            """Vertex mapping to "node"
-
-            :param vm:  node mapping
-            :return:    "node" element in payload
-            """
-            node = {k: {"column": v, "source": source}
-                    for k, v in vm.attributes.items()}
-            node["@id"] = {"column": vm.node_id, "source": source}
-            node["@type"] = vm.node_type
-            return node
-        return [nm2node(vm) for vm in vms]
+        node = {k: {"column": v, "source": vm.path}
+                for k, v in vm.attributes.items()}
+        node["@id"] = {"column": vm.node_id, "source": vm.path}
+        node["@type"] = vm.node_type
+        return node
 
     @staticmethod
-    def ems2links(source: str, ems: List[EdgeMapping]) -> List[Dict]:
-        """Edge mappings to "links" element in payload
+    def em2link(em: EdgeMapping) -> Dict:
+        """Edge mapping to "link"
 
-        :param source:  data source path
-        :param ems:     edge mappings
-        :return:        "links" element in payload
+        :param em:  edge mapping
+        :return:    "link" element in payload
         """
-        def em2link(em: EdgeMapping) -> Dict:
-            """Edge mapping to "link"
-
-            :param em:  edge mapping
-            :return:    "link" element in payload
-            """
-            link = {k: {"column": v, "source": source}
-                    for k, v in em.attributes.items()}
-            link["@src"] = {"column": em.src, "source": source}
-            link["@dest"] = {"column": em.dst, "source": source}
-            link["@type"] = {"name": em.edge_type, "source": em.src_type}
-            return link
-        return [em2link(em) for em in ems]
+        link = {k: {"column": v, "source": em.path}
+                for k, v in em.attributes.items()}
+        link["@src"] = {"column": em.src, "source": em.path}
+        link["@dest"] = {"column": em.dst, "source": em.path}
+        link["@type"] = {"name": em.edge_type, "source": em.src_type}
+        return link
 
 
-def create_graph_schema() -> GraphSchema:
+def create_schema() -> GraphSchema:
     """Exposed method to create graph schema
 
     :return: graph schema object
     """
     return GraphSchema()
-
-
-def new_data_source(path: str) -> DataSource:
-    """Exposed method to create new data source
-
-    :param path:    data source path
-    :return:        new data source object
-    """
-    return DataSource(path)

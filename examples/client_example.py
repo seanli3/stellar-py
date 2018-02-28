@@ -6,7 +6,7 @@ import networkx as nx
 ss = st.create_session(url="http://localhost:3000")
 
 """Create graph schema"""
-schema = st.create_graph_schema()
+schema = st.create_schema()
 schema.add_node_type(
     name='Paper',
     attribute_types={
@@ -27,7 +27,7 @@ schema.add_edge_type(
 
 """Create data source mappings"""
 papers = st.new_data_source(path='papers.csv')
-papers.add_node_mapping(schema.node['Paper'].create_mapping(
+papers.add_node_mapping(schema.node['Paper'].create_map(
     node_id='Id',
     attributes={
         'dataset': 'dataset',
@@ -36,7 +36,7 @@ papers.add_node_mapping(schema.node['Paper'].create_mapping(
         'year': 'year'
     }
 ))
-papers.add_edge_mapping(schema.edge['SharesAuthor'].create_mapping(
+papers.add_edge_mapping(schema.edge['SharesAuthor'].create_map(
     src='Id',
     dst='Id',
     attributes={
@@ -44,7 +44,7 @@ papers.add_edge_mapping(schema.edge['SharesAuthor'].create_mapping(
     }
 ))
 authlinks = st.new_data_source(path='paperlinks.csv')
-authlinks.add_edge_mapping(schema.edge['SharesAuthor'].create_mapping(
+authlinks.add_edge_mapping(schema.edge['SharesAuthor'].create_map(
     src='Source',
     dst='Target',
     attributes={

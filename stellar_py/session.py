@@ -11,9 +11,9 @@ import redis
 import polling
 import json
 import re
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Optional, Callable, Union
 
-from stellar_py.ingestion import StellarIngestPayload, GraphSchema, DataSource
+from stellar_py.ingestion import StellarIngestPayload, GraphSchema, NodeMapping, EdgeMapping
 from stellar_py.nai import StellarNAIPayload
 from stellar_py.er import StellarERPayload
 from stellar_py.graph import StellarGraph
@@ -63,6 +63,7 @@ class StellarTask:
 
     _STATUS_COMPLETE = 'completed'
     _STATUS_ABORT = 'aborted'
+    _STATUS_FAIL = 'failed'
     _REDIS_PREFIX = 'coordinator:sessions:'
 
     def __init__(self, url: str, port: int, name: str, session_id: str) -> None:
@@ -90,7 +91,7 @@ class StellarTask:
         :return: true if done
         """
         status = self.check_status()
-        return (self._STATUS_COMPLETE in status) or (self._STATUS_ABORT in status)
+        return (self._STATUS_COMPLETE in status) or (self._STATUS_ABORT in status) or (self._STATUS_FAIL in status)
 
     def wait_for_result(self, timeout: float = 0) -> StellarResult:
         """Poll status until result is available then create result
@@ -124,7 +125,7 @@ class StellarSession:
         """
         self._url = "http://{}:{}".format(url, port)
         self._redis_url = redis_url or url
-        self._redis_port = redis_port  # TODO: update when finalised
+        self._redis_port = redis_port
 
     def _get(self, endpoint: str, params: dict = None) -> requests.Response:
         """GET request to the coordinator/endpoint
@@ -179,27 +180,28 @@ class StellarSession:
         else:
             raise SessionError(r.status_code, r.reason)
 
-    def ingest_start(self, schema: GraphSchema, sources: List[DataSource], label: str) -> StellarTask:
+    def ingest_start(self, schema: GraphSchema, mappings: List[Union[NodeMapping, EdgeMapping]],
+                     label: str) -> StellarTask:
         """Start an ingestion session
 
         :param schema:      Graph schema
-        :param sources:     List of data-source mappings
+        :param mappings:    List of data-source mappings
         :param label:       Label to be assigned to output graph
         :return:            StellarTask
         """
-        return self._start(self._TASK_INGEST, lambda sid: StellarIngestPayload(sid, schema, sources, label))
+        return self._start(self._TASK_INGEST, lambda sid: StellarIngestPayload(sid, schema, mappings, label))
 
-    def ingest(self, schema: GraphSchema, sources: List[DataSource], label: str = 'ingest',
+    def ingest(self, schema: GraphSchema, mappings: List[Union[NodeMapping, EdgeMapping]], label: str = 'ingest',
                timeout: float = 0) -> StellarGraph:
         """Start and wait for an ingestion session to produce graph
 
         :param schema:      Graph schema
-        :param sources:     List of data-source mappings
+        :param mappings:    List of data-source mappings
         :param label:       Label to be assigned to output graph
         :param timeout:     Timeout in seconds. Set to zero to poll forever.
         :return:            StellarGraph
         """
-        task = self.ingest_start(schema, sources, label)
+        task = self.ingest_start(schema, mappings, label)
         res = task.wait_for_result(timeout)
         if res.success:
             return StellarGraph(res.dir, label)
