@@ -18,6 +18,7 @@ from stellar_py.nai import StellarNAIPayload
 from stellar_py.er import StellarERPayload
 from stellar_py.graph import StellarGraph
 from stellar_py.payload import Payload
+from stellar_py.model import StellarMLModel
 
 
 class SessionError(Exception):
@@ -235,33 +236,36 @@ class StellarSession:
         else:
             raise SessionError(500, res.reason)
 
-    def nai_start(self, graph: StellarGraph, target_attribute: str, node_type: str, attributes_to_ignore: List[str],
-                  label: str) -> StellarTask:
+    def nai_start(self, graph: StellarGraph, model: StellarMLModel, target_attribute: str, node_type: str,
+                  attributes_to_ignore: List[str], label: str) -> StellarTask:
         """Start an Node Attribute Inference session
 
         :param graph:               Input StellarGraph object
+        :param model:               Machine Learning model with pipeline config
         :param target_attribute     Attribute to infer
         :param node_type            Type of node to infer attributes on
         :param attributes_to_ignore Attributes to ignore
         :param label:               Label to be assigned to output graph
         :return:                    StellarTask
         """
-        return self._start(self._TASK_NAI, lambda sid: StellarNAIPayload(sid, graph, target_attribute, node_type,
+        return self._start(self._TASK_NAI, lambda sid: StellarNAIPayload(sid, graph, model, target_attribute, node_type,
                                                                          attributes_to_ignore, label))
 
-    def nai(self, graph: StellarGraph, target_attribute: str, node_type: str,
-            attributes_to_ignore: Optional[List[str]] = None, label: str = 'nai', timeout: float = 0) -> StellarGraph:
-        """Start and wait for an Node Attribute Inference session to produce graph
+    def predict(self, graph: StellarGraph, model: StellarMLModel, target_attribute: str, node_type: str,
+                attributes_to_ignore: Optional[List[str]] = None, label: str = 'nai',
+                timeout: float = 0) -> StellarGraph:
+        """Predict attributes on graph elements
 
         :param graph:               Input StellarGraph object
+        :param model:               Machine Learning model to use
         :param target_attribute     Attribute to infer
         :param node_type            Type of node to infer attributes on
         :param attributes_to_ignore Attributes to ignore
         :param label:               Label to be assigned to output graph
         :param timeout:             Timeout in seconds. Set to zero to poll forever.
-        :return:                    StellarGraph
+        :return:                    StellarGraph with predicted attributes
         """
-        task = self.nai_start(graph, target_attribute, node_type, attributes_to_ignore or [], label)
+        task = self.nai_start(graph, model, target_attribute, node_type, attributes_to_ignore or [], label)
         res = task.wait_for_result(timeout)
         if res.success:
             print("WARNING: Current version does not allow NAI to update its graph label. "

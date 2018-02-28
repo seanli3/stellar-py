@@ -26,42 +26,47 @@ schema.add_edge_type(
 )
 
 """Create data source mappings"""
-papers = st.new_data_source(path='papers.csv')
-papers.add_node_mapping(schema.node['Paper'].create_map(
-    node_id='Id',
-    attributes={
+paper_nodes = schema.node['Paper'].create_map(
+    path='papers.csv',
+    column='Id',
+    map_attributes={
         'dataset': 'dataset',
         'title': 'title',
         'venue': 'venue',
         'year': 'year'
     }
-))
-papers.add_edge_mapping(schema.edge['SharesAuthor'].create_map(
+)
+
+selfauth_edges = schema.edge['SharesAuthor'].create_map(
+    path='papers.csv',
     src='Id',
     dst='Id',
-    attributes={
+    map_attributes={
         'author': 'Id'
     }
-))
-authlinks = st.new_data_source(path='paperlinks.csv')
-authlinks.add_edge_mapping(schema.edge['SharesAuthor'].create_map(
+)
+
+auth_edges = schema.edge['SharesAuthor'].create_map(
+    path='authors.csv',
     src='Source',
     dst='Target',
-    attributes={
+    map_attributes={
         'author': 'Author'
     }
-))
-data_sources = [papers, authlinks]
+)
+
+mappings = [paper_nodes, selfauth_edges, auth_edges]
 
 """Ingestor"""
-graph_ingest = ss.ingest(schema=schema, sources=data_sources, label='papers')
+graph_ingest = ss.ingest(schema=schema, mappings=mappings, label='papers')
 
 """Entity Resolution"""
 graph_er = ss.er(graph=graph_ingest)
 
 """Node Attribute Inference"""
-graph_nai = ss.nai(
+graph_nai = ss.predict(
     graph=graph_er,
+    model=st.model.Node2Vec(),
     target_attribute='venue',
     node_type='Paper',
     attributes_to_ignore=['__id', 'title', 'dataset']
