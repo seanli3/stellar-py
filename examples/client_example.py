@@ -61,7 +61,7 @@ mappings = [paper_nodes, selfauth_edges, auth_edges]
 graph_ingest = ss.ingest(schema=schema, mappings=mappings, label='papers')
 
 """Entity Resolution"""
-graph_er = ss.er(graph=graph_ingest)
+graph_er = ss.entity_resolution(graph=graph_ingest, resolver=st.entity.EntityResolution())
 
 """Node Attribute Inference"""
 graph_nai = ss.predict(

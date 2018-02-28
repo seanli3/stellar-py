@@ -6,6 +6,7 @@ Classes and methods related to the Entity Resolution module.
 
 from stellar_py.payload import Payload
 from stellar_py.graph import StellarGraph
+from stellar_py.entity import StellarEntityResolver
 from typing import Dict
 
 
@@ -13,7 +14,8 @@ class StellarERPayload(Payload):
     """Payload to start an ER task
 
     """
-    def __init__(self, session_id: str, graph: StellarGraph, attribute_thresholds: Dict[str, float], label: str):
+    def __init__(self, session_id: str, graph: StellarGraph, resolver: StellarEntityResolver,
+                 attribute_thresholds: Dict[str, float], label: str):
         Payload.__init__(self, session_id, label)
         self.input = graph.path
 

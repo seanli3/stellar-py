@@ -19,6 +19,7 @@ from stellar_py.er import StellarERPayload
 from stellar_py.graph import StellarGraph
 from stellar_py.payload import Payload
 from stellar_py.model import StellarMLModel
+from stellar_py.entity import StellarEntityResolver
 
 
 class SessionError(Exception):
@@ -209,27 +210,32 @@ class StellarSession:
         else:
             raise SessionError(500, res.reason)
 
-    def er_start(self, graph: StellarGraph, attribute_thresholds: Dict[str, float], label: str) -> StellarTask:
+    def er_start(self, graph: StellarGraph, resolver: StellarEntityResolver, attribute_thresholds: Dict[str, float],
+                 label: str) -> StellarTask:
         """Start an Entity Resolution session
 
         :param graph:       Input StellarGraph object
+        :param resolver:    Entity Resolution technique to use
         :param attribute_thresholds:      thresholds for each attribute as a dict - normalised between 0 and 1
         :param label:       Label to be assigned to output graph
         :return:            StellarTask
         """
-        return self._start(self._TASK_ER, lambda sid: StellarERPayload(sid, graph, attribute_thresholds, label))
+        return self._start(self._TASK_ER,
+                           lambda sid: StellarERPayload(sid, graph, resolver, attribute_thresholds, label))
 
-    def er(self, graph: StellarGraph, attribute_thresholds: Optional[Dict[str, float]] = None,
-           label: str = 'er', timeout: float = 0) -> StellarGraph:
-        """Start and wait for an Entity Resolution session to produce graph
+    def entity_resolution(self, graph: StellarGraph, resolver: StellarEntityResolver,
+                          attribute_thresholds: Optional[Dict[str, float]] = None, label: str = 'er',
+                          timeout: float = 0) -> StellarGraph:
+        """Resolve duplicate entities on a graph
 
         :param graph:       Input StellarGraph object
+        :param resolver:    Entity Resolution technique to use
         :param attribute_thresholds:      thresholds for each attribute as a dict - normalised between 0 and 1
         :param label:       Label to be assigned to output graph
         :param timeout:     Timeout in seconds. Set to zero to poll forever.
-        :return:            StellarGraph
+        :return:            StellarGraph with entities resolved
         """
-        task = self.er_start(graph, attribute_thresholds or {}, label)
+        task = self.er_start(graph, resolver, attribute_thresholds or {}, label)
         res = task.wait_for_result(timeout)
         if res.success:
             return StellarGraph(res.dir, label)
