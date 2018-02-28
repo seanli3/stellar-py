@@ -1,4 +1,4 @@
-from stellar_py.session import *
+from stellar.session import *
 import redis
 import pytest
 import httpretty

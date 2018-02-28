@@ -1,9 +1,9 @@
 """Test for ER"""
 
-from stellar_py.er import *
-from stellar_py.entity import *
-from stellar_py.session import SessionError
-import stellar_py as st
+from stellar.er import *
+from stellar.entity import *
+from stellar.session import SessionError
+import stellar as st
 from redis import StrictRedis
 import httpretty
 import pytest

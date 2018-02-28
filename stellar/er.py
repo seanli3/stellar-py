@@ -4,9 +4,9 @@ Classes and methods related to the Entity Resolution module.
 
 """
 
-from stellar_py.payload import Payload
-from stellar_py.graph import StellarGraph
-from stellar_py.entity import StellarEntityResolver
+from stellar.payload import Payload
+from stellar.graph import StellarGraph
+from stellar.entity import StellarEntityResolver
 from typing import Dict
 
 

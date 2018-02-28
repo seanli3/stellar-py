@@ -1,4 +1,4 @@
-from stellar_py.graph import *
+from stellar.graph import *
 import pytest
 
 

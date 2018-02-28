@@ -4,7 +4,7 @@ Classes and methods related to the Ingestor module.
 
 """
 
-from stellar_py.payload import Payload
+from stellar.payload import Payload
 from typing import Dict, Optional, List, Union
 
 

@@ -13,13 +13,13 @@ import json
 import re
 from typing import Dict, List, Optional, Callable, Union
 
-from stellar_py.ingestion import StellarIngestPayload, GraphSchema, NodeMapping, EdgeMapping
-from stellar_py.nai import StellarNAIPayload
-from stellar_py.er import StellarERPayload
-from stellar_py.graph import StellarGraph
-from stellar_py.payload import Payload
-from stellar_py.model import StellarMLModel
-from stellar_py.entity import StellarEntityResolver
+from stellar.ingestion import StellarIngestPayload, GraphSchema, NodeMapping, EdgeMapping
+from stellar.nai import StellarNAIPayload
+from stellar.er import StellarERPayload
+from stellar.graph import StellarGraph
+from stellar.payload import Payload
+from stellar.model import StellarMLModel
+from stellar.entity import StellarEntityResolver
 
 
 class SessionError(Exception):

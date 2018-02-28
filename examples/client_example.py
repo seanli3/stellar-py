@@ -1,4 +1,4 @@
-import stellar_py as st
+import stellar as st
 import networkx as nx
 
 

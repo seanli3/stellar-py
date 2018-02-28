@@ -4,9 +4,9 @@ Classes and methods related to the Node Attribute Inference module
 
 """
 
-from stellar_py.payload import Payload
-from stellar_py.graph import StellarGraph
-from stellar_py.model import StellarMLModel
+from stellar.payload import Payload
+from stellar.graph import StellarGraph
+from stellar.model import StellarMLModel
 from typing import List
 
 

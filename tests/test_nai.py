@@ -1,9 +1,9 @@
 """Test for NAI"""
 
-from stellar_py.nai import *
-from stellar_py.model import *
-from stellar_py.session import SessionError
-import stellar_py as st
+from stellar.nai import *
+from stellar.model import *
+from stellar.session import SessionError
+import stellar as st
 from redis import StrictRedis
 import httpretty
 import pytest

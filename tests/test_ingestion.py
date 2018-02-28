@@ -1,6 +1,6 @@
-from stellar_py.ingestion import *
+from stellar.ingestion import *
 from redis import StrictRedis
-import stellar_py as st
+import stellar as st
 import pytest
 import httpretty
 
