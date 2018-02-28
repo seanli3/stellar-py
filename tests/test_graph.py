@@ -5,6 +5,13 @@ import pytest
 EPGM_PATH = 'tests/res/lotr.epgm'
 
 
+def test_repr():
+    graph = StellarGraph(EPGM_PATH, "")
+    graph_uuid = StellarGraph('/tmp/stellar/abcdef01-1234-1234-9876-abcdefff5690/graph', "")
+    assert repr(graph) == "StellarGraph('{}')".format(EPGM_PATH)
+    assert repr(graph_uuid) == "StellarGraph(abcdef01-1234-1234-9876-abcdefff5690)"
+
+
 def test_load_epgm():
     def count_by_label(elems, label):
         """Count elements by label

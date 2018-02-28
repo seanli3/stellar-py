@@ -15,6 +15,7 @@ def test_result_success():
     assert result.status == 'completed'
     assert result.success
     assert result.dir == 'graph.epgm'
+    assert repr(result) == 'StellarResult(status=completed,success=True,dir="graph.epgm",reason="")'
 
 
 def test_result_fail():
@@ -23,11 +24,17 @@ def test_result_fail():
     assert result.status == 'aborted'
     assert not result.success
     assert result.reason == 'session error'
+    assert repr(result) == 'StellarResult(status=aborted,success=False,dir="",reason="session error")'
 
 
 @pytest.fixture(scope='module')
 def get_task():
-    return StellarTask('12341234', 6379, 'ingest', 'test:sessions:1234')
+    return StellarTask('12341234', 6379, 'ingest', '1234')
+
+
+def test_task_repr():
+    task = get_task()
+    assert repr(task) == 'StellarTask(name="ingest",id="coordinator:sessions:1234")'
 
 
 def test_task_init(monkeypatch):
@@ -69,6 +76,11 @@ def test_task_wait_for_result_timeout(monkeypatch):
     )
     with pytest.raises(polling.TimeoutException):
         result = get_task().wait_for_result(timeout=0.1)
+
+
+def test_session_repr():
+    session = StellarSession('12.34.12.34', 3000)
+    assert repr(session) == 'StellarSession(url="http://12.34.12.34:3000")'
 
 
 @httpretty.activate

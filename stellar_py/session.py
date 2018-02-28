@@ -50,12 +50,18 @@ class StellarResult:
         :param payload:     Payload dict from Redis
         """
         self.status = status
+        self.dir = ""
+        self.reason = ""
         if 'completed' in status:
             self.success = True
             self.dir = payload['output']
         else:
             self.success = False
             self.reason = payload['error']
+
+    def __repr__(self):
+        return "StellarResult(status={},success={},dir=\"{}\",reason=\"{}\")".format(
+            self.status, self.success, self.dir, self.reason)
 
 
 class StellarTask:
@@ -79,6 +85,9 @@ class StellarTask:
         self._r = redis.StrictRedis(host=url, port=port, db=0, decode_responses=True)
         self._session_id = self._REDIS_PREFIX + session_id
         self._name = name
+
+    def __repr__(self):
+        return "StellarTask(name=\"{}\",id=\"{}\")".format(self._name, self._session_id)
 
     def check_status(self) -> str:
         """Check status of task
@@ -128,6 +137,9 @@ class StellarSession:
         self._url = "http://{}:{}".format(url, port)
         self._redis_url = redis_url or url
         self._redis_port = redis_port
+
+    def __repr__(self):
+        return "StellarSession(url=\"{}\")".format(self._url)
 
     def _get(self, endpoint: str, params: dict = None) -> requests.Response:
         """GET request to the coordinator/endpoint

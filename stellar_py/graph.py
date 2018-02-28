@@ -7,6 +7,7 @@ Classes and methods related to referencing and operating on a stellar graph.
 import networkx as nx
 import os
 import json
+import re
 from typing import Dict, List, Tuple, Optional
 
 GraphElement = Dict[str, any]
@@ -20,6 +21,13 @@ class StellarGraph:
     def __init__(self, path: str, label: str):
         self.path = path
         self.label = label
+
+    def __repr__(self):
+        m = re.search("([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})", self.path)
+        if not m:
+            return "StellarGraph('{}')".format(self.path)
+        else:
+            return "StellarGraph({})".format(m.group(0))
 
     def _load_epgm(self) -> EPGM:
         """Load graphs from EPGM path
