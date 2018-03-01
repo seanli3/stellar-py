@@ -1,8 +1,8 @@
 Installation
 ************
 
-Python Virtual Environment
-==========================
+Setting up a Python Virtual Environment
+=======================================
 
 Using virtualenv
 ----------------
@@ -29,7 +29,7 @@ Download and install Anaconda 3 from http://continuum.io
 
 Create a Conda environment and install pip::
 
-    conda create -name myproject-env pip
+    conda create --name myproject-env pip
 
 Activate the new virtual environment::
 
@@ -43,5 +43,7 @@ Make sure you have a python virtual environment activated - the name of your vir
     sudo apt-get install git
     pip install git+git://github.com/data61/stellar-py
 
+If you want to download a particular branch from the repository, you can specify the name of this branch.::
 
+    pip install git+git://github.com/data61/stellar-py@devel
 
