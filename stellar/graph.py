@@ -81,3 +81,10 @@ class StellarGraph:
         g.add_nodes_from(graph_dict['vertices'])
         g.add_edges_from(graph_dict['edges'])
         return g
+
+    def to_graphml(self, filepath: str) -> bool:
+        try:
+            nx.write_graphml(nx.DiGraph(self.to_networkx()), filepath)
+            return True
+        except:
+            return False
