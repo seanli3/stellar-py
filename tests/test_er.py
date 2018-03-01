@@ -1,8 +1,9 @@
 """Test for ER"""
 
-from stellar_py.er import *
-from stellar_py.session import SessionError
-import stellar_py as st
+from stellar.er import *
+from stellar.entity import *
+from stellar.session import SessionError
+import stellar as st
 from redis import StrictRedis
 import httpretty
 import pytest
@@ -15,7 +16,8 @@ stellar_addr_session = stellar_addr + "/init"
 
 def test_er_payload():
     graph = StellarGraph('graph.epgm', 'test_er_ori')
-    payload = StellarERPayload(session_id='test_session', graph=graph, attribute_thresholds={}, label='test_er')
+    payload = StellarERPayload(session_id='test_session', graph=graph, resolver=EntityResolution(),
+                               attribute_thresholds={}, label='test_er')
     assert payload.sessionId == 'test_session'
     assert payload.input == 'graph.epgm'
     assert payload.label == 'test_er'
@@ -27,7 +29,8 @@ def test_er_start():
                            body=u'{"sessionId": "melon"}')
     httpretty.register_uri(httpretty.GET, stellar_addr_session, body=u'{"sessionId": "dummy_session_id"}')
     ss = st.create_session(url=stellar_addr)
-    task = ss.er_start(graph=StellarGraph('graph.epgm', 'test_er_ori'), attribute_thresholds={}, label='test_er')
+    task = ss.er_start(graph=StellarGraph('graph.epgm', 'test_er_ori'), resolver=EntityResolution(),
+                       attribute_thresholds={}, label='test_er')
     assert task._session_id == "coordinator:sessions:dummy_session_id"
 
 
@@ -39,7 +42,7 @@ def test_er(monkeypatch):
         'test_er.StrictRedis.get',
         lambda *_: u'{"status": "er completed", "er": {"output": "test_path.epgm", "error":""}}')
     ss = st.create_session(url=stellar_addr)
-    graph = ss.er(StellarGraph('graph.epgm', 'test_er_ori'), label='test_er')
+    graph = ss.entity_resolution(StellarGraph('graph.epgm', 'test_er_ori'), EntityResolution(), label='test_er')
     assert graph.path == "test_path.epgm"
     assert graph.label == 'test_er'
 
@@ -53,4 +56,4 @@ def test_er_error(monkeypatch):
         lambda *_: u'{"status": "aborted", "er": {"output": "", "error": "testing abort"}}')
     ss = st.create_session(url=stellar_addr)
     with pytest.raises(SessionError):
-        ss.er(StellarGraph('graph.epgm', 'test_er'))
+        ss.entity_resolution(StellarGraph('graph.epgm', 'test_er'), EntityResolution())

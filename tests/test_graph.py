@@ -1,8 +1,15 @@
-from stellar_py.graph import *
+from stellar.graph import *
 import pytest
 
 
 EPGM_PATH = 'tests/res/lotr.epgm'
+
+
+def test_repr():
+    graph = StellarGraph(EPGM_PATH, "")
+    graph_uuid = StellarGraph('/tmp/stellar/abcdef01-1234-1234-9876-abcdefff5690/graph', "")
+    assert repr(graph) == "StellarGraph('{}')".format(EPGM_PATH)
+    assert repr(graph_uuid) == "StellarGraph(abcdef01-1234-1234-9876-abcdefff5690)"
 
 
 def test_load_epgm():
@@ -66,7 +73,7 @@ def test_to_networkx():
 
 
 def test_to_networkx_with_label():
-    graph = StellarGraph(EPGM_PATH, "").to_networkx(inc_label_as='my_label')
+    graph = StellarGraph(EPGM_PATH, "").to_networkx(inc_type_as='my_label')
     assert graph.number_of_nodes() == 7
     assert graph.number_of_edges() == 11
     assert sum(attr['my_label'] == 'Location' for _, attr in graph.nodes(data=True)) == 2

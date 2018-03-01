@@ -11,7 +11,7 @@ env:
 install:
   - pip install .[testing]
 script:
-  - coverage run --source=stellar_py setup.py test
+  - coverage run --source=stellar setup.py test
 after_success:
   - coveralls
 

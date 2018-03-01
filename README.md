@@ -26,16 +26,15 @@ You can also skip straight to `4.` if you would like to install in an existing e
 ## Basic Usage
 Ingest from a single data source with columns (ID, FIRST_NAME, SURNAME, AGE) as vertices
 ```python
-import stellar_py as st
+import stellar as st
 
 # create session
 ss = st.create_session(url="stlr://12.34.56.78")
 
 # create graph schema
-schema = st.create_graph_schema()
-schema.add_vertex_class(
+schema = st.create_schema().add_node_type(
     name='Person',
-    properties={
+    attribute_types={
         'first name': 'string',
         'last name': 'string',
         'age': 'integer'
@@ -43,20 +42,18 @@ schema.add_vertex_class(
 )
 
 # configure data source
-data_source = st.new_data_source(path='people.csv')
-data_source.add_vertex_mapping(
-    schema.vertex['Person'].create_mapping(
-        vertex_id='ID',
-        properties={
-            'first name': 'FIRST_NAME',
-            'last name': 'SURNAME',
-            'age': 'AGE'
-        }
-    )
+node_map = schema.node['Person'].create_map(
+    path='people.csv',
+    column='ID',
+    map_attributes={
+        'first name': 'FIRST_NAME',
+        'last name': 'SURNAME',
+        'age': 'AGE'
+    }
 )
 
-# run ingestor
-graph_ingest = ss.ingest(schema=schema, sources=[data_source])
+# create graph 
+graph = ss.ingest(schema=schema, mappings=[node_map], label='people')
 ```
 
 ## Other examples

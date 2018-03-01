@@ -11,13 +11,15 @@ import redis
 import polling
 import json
 import re
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Optional, Callable, Union
 
-from stellar_py.ingestion import StellarIngestPayload, GraphSchema, DataSource
-from stellar_py.nai import StellarNAIPayload
-from stellar_py.er import StellarERPayload
-from stellar_py.graph import StellarGraph
-from stellar_py.payload import Payload
+from stellar.ingestion import StellarIngestPayload, GraphSchema, NodeMapping, EdgeMapping
+from stellar.nai import StellarNAIPayload
+from stellar.er import StellarERPayload
+from stellar.graph import StellarGraph
+from stellar.payload import Payload
+from stellar.model import StellarMLModel
+from stellar.entity import StellarEntityResolver
 
 
 class SessionError(Exception):
@@ -48,12 +50,18 @@ class StellarResult:
         :param payload:     Payload dict from Redis
         """
         self.status = status
+        self.dir = ""
+        self.reason = ""
         if 'completed' in status:
             self.success = True
             self.dir = payload['output']
         else:
             self.success = False
             self.reason = payload['error']
+
+    def __repr__(self):
+        return "StellarResult(status={},success={},dir=\"{}\",reason=\"{}\")".format(
+            self.status, self.success, self.dir, self.reason)
 
 
 class StellarTask:
@@ -63,6 +71,7 @@ class StellarTask:
 
     _STATUS_COMPLETE = 'completed'
     _STATUS_ABORT = 'aborted'
+    _STATUS_FAIL = 'failed'
     _REDIS_PREFIX = 'coordinator:sessions:'
 
     def __init__(self, url: str, port: int, name: str, session_id: str) -> None:
@@ -77,6 +86,9 @@ class StellarTask:
         self._session_id = self._REDIS_PREFIX + session_id
         self._name = name
 
+    def __repr__(self):
+        return "StellarTask(name=\"{}\",id=\"{}\")".format(self._name, self._session_id)
+
     def check_status(self) -> str:
         """Check status of task
 
@@ -90,7 +102,7 @@ class StellarTask:
         :return: true if done
         """
         status = self.check_status()
-        return (self._STATUS_COMPLETE in status) or (self._STATUS_ABORT in status)
+        return (self._STATUS_COMPLETE in status) or (self._STATUS_ABORT in status) or (self._STATUS_FAIL in status)
 
     def wait_for_result(self, timeout: float = 0) -> StellarResult:
         """Poll status until result is available then create result
@@ -124,7 +136,10 @@ class StellarSession:
         """
         self._url = "http://{}:{}".format(url, port)
         self._redis_url = redis_url or url
-        self._redis_port = redis_port  # TODO: update when finalised
+        self._redis_port = redis_port
+
+    def __repr__(self):
+        return "StellarSession(url=\"{}\")".format(self._url)
 
     def _get(self, endpoint: str, params: dict = None) -> requests.Response:
         """GET request to the coordinator/endpoint
@@ -179,87 +194,96 @@ class StellarSession:
         else:
             raise SessionError(r.status_code, r.reason)
 
-    def ingest_start(self, schema: GraphSchema, sources: List[DataSource], label: str) -> StellarTask:
+    def ingest_start(self, schema: GraphSchema, mappings: List[Union[NodeMapping, EdgeMapping]],
+                     label: str) -> StellarTask:
         """Start an ingestion session
 
         :param schema:      Graph schema
-        :param sources:     List of data-source mappings
+        :param mappings:    List of data-source mappings
         :param label:       Label to be assigned to output graph
         :return:            StellarTask
         """
-        return self._start(self._TASK_INGEST, lambda sid: StellarIngestPayload(sid, schema, sources, label))
+        return self._start(self._TASK_INGEST, lambda sid: StellarIngestPayload(sid, schema, mappings, label))
 
-    def ingest(self, schema: GraphSchema, sources: List[DataSource], label: str = 'ingest',
+    def ingest(self, schema: GraphSchema, mappings: List[Union[NodeMapping, EdgeMapping]], label: str = 'ingest',
                timeout: float = 0) -> StellarGraph:
         """Start and wait for an ingestion session to produce graph
 
         :param schema:      Graph schema
-        :param sources:     List of data-source mappings
+        :param mappings:    List of data-source mappings
         :param label:       Label to be assigned to output graph
         :param timeout:     Timeout in seconds. Set to zero to poll forever.
         :return:            StellarGraph
         """
-        task = self.ingest_start(schema, sources, label)
+        task = self.ingest_start(schema, mappings, label)
         res = task.wait_for_result(timeout)
         if res.success:
             return StellarGraph(res.dir, label)
         else:
             raise SessionError(500, res.reason)
 
-    def er_start(self, graph: StellarGraph, attribute_thresholds: Dict[str, float], label: str) -> StellarTask:
+    def er_start(self, graph: StellarGraph, resolver: StellarEntityResolver, attribute_thresholds: Dict[str, float],
+                 label: str) -> StellarTask:
         """Start an Entity Resolution session
 
         :param graph:       Input StellarGraph object
+        :param resolver:    Entity Resolution technique to use
         :param attribute_thresholds:      thresholds for each attribute as a dict - normalised between 0 and 1
         :param label:       Label to be assigned to output graph
         :return:            StellarTask
         """
-        return self._start(self._TASK_ER, lambda sid: StellarERPayload(sid, graph, attribute_thresholds, label))
+        return self._start(self._TASK_ER,
+                           lambda sid: StellarERPayload(sid, graph, resolver, attribute_thresholds, label))
 
-    def er(self, graph: StellarGraph, attribute_thresholds: Optional[Dict[str, float]] = None,
-           label: str = 'er', timeout: float = 0) -> StellarGraph:
-        """Start and wait for an Entity Resolution session to produce graph
+    def entity_resolution(self, graph: StellarGraph, resolver: StellarEntityResolver,
+                          attribute_thresholds: Optional[Dict[str, float]] = None, label: str = 'er',
+                          timeout: float = 0) -> StellarGraph:
+        """Resolve duplicate entities on a graph
 
         :param graph:       Input StellarGraph object
+        :param resolver:    Entity Resolution technique to use
         :param attribute_thresholds:      thresholds for each attribute as a dict - normalised between 0 and 1
         :param label:       Label to be assigned to output graph
         :param timeout:     Timeout in seconds. Set to zero to poll forever.
-        :return:            StellarGraph
+        :return:            StellarGraph with entities resolved
         """
-        task = self.er_start(graph, attribute_thresholds or {}, label)
+        task = self.er_start(graph, resolver, attribute_thresholds or {}, label)
         res = task.wait_for_result(timeout)
         if res.success:
             return StellarGraph(res.dir, label)
         else:
             raise SessionError(500, res.reason)
 
-    def nai_start(self, graph: StellarGraph, target_attribute: str, node_type: str, attributes_to_ignore: List[str],
-                  label: str) -> StellarTask:
+    def nai_start(self, graph: StellarGraph, model: StellarMLModel, target_attribute: str, node_type: str,
+                  attributes_to_ignore: List[str], label: str) -> StellarTask:
         """Start an Node Attribute Inference session
 
         :param graph:               Input StellarGraph object
+        :param model:               Machine Learning model with pipeline config
         :param target_attribute     Attribute to infer
         :param node_type            Type of node to infer attributes on
         :param attributes_to_ignore Attributes to ignore
         :param label:               Label to be assigned to output graph
         :return:                    StellarTask
         """
-        return self._start(self._TASK_NAI, lambda sid: StellarNAIPayload(sid, graph, target_attribute, node_type,
+        return self._start(self._TASK_NAI, lambda sid: StellarNAIPayload(sid, graph, model, target_attribute, node_type,
                                                                          attributes_to_ignore, label))
 
-    def nai(self, graph: StellarGraph, target_attribute: str, node_type: str,
-            attributes_to_ignore: Optional[List[str]] = None, label: str = 'nai', timeout: float = 0) -> StellarGraph:
-        """Start and wait for an Node Attribute Inference session to produce graph
+    def predict(self, graph: StellarGraph, model: StellarMLModel, target_attribute: str, node_type: str,
+                attributes_to_ignore: Optional[List[str]] = None, label: str = 'nai',
+                timeout: float = 0) -> StellarGraph:
+        """Predict attributes on graph elements
 
         :param graph:               Input StellarGraph object
+        :param model:               Machine Learning model to use
         :param target_attribute     Attribute to infer
         :param node_type            Type of node to infer attributes on
         :param attributes_to_ignore Attributes to ignore
         :param label:               Label to be assigned to output graph
         :param timeout:             Timeout in seconds. Set to zero to poll forever.
-        :return:                    StellarGraph
+        :return:                    StellarGraph with predicted attributes
         """
-        task = self.nai_start(graph, target_attribute, node_type, attributes_to_ignore or [], label)
+        task = self.nai_start(graph, model, target_attribute, node_type, attributes_to_ignore or [], label)
         res = task.wait_for_result(timeout)
         if res.success:
             print("WARNING: Current version does not allow NAI to update its graph label. "

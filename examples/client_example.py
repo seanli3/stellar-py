@@ -1,62 +1,79 @@
-import stellar_py as st
-from stellar_py.session import StellarTask
+import stellar as st
+import networkx as nx
 
 
-ss = st.create_session(url="https://0891ed59-c6d6-41e5-92ef-c67647d5370d.mock.pstmn.io")
+"""Create session"""
+ss = st.create_session(url="http://localhost:8000")
 
-# create graph schema
-schema = st.create_graph_schema()
-schema.add_vertex_class(
-    name='Author',
-    properties={
-        'extref_id': 'string',
-        'type': 'string',
-        'name': 'string'
+"""Create graph schema"""
+schema = st.create_schema()
+schema.add_node_type(
+    name='Paper',
+    attribute_types={
+        'dataset': 'string',
+        'title': 'string',
+        'venue': 'string',
+        'year': 'integer'
     }
 )
-schema.add_edge_class(
-    name='IsSameAs',
-    src_class='Author',
-    dst_class='Author'
+schema.add_edge_type(
+    name='SharesAuthor',
+    src_type='Paper',
+    dst_type='Paper',
+    attribute_types={
+        'author': 'string'
+    }
 )
 
-# use schema to configure data sources
-src1 = st.new_data_source(path='nodes.csv')
-src1.add_vertex_mapping(
-    schema.vertex['Author'].create_mapping(
-        vertex_id='Id',
-        properties={
-            'extref_id': 'Extref_Id',
-            'type': 'Type',
-            'name': 'Label'
-        }
-    )
+"""Create data source mappings"""
+paper_nodes = schema.node['Paper'].create_map(
+    path='papers.csv',
+    column='Id',
+    map_attributes={
+        'dataset': 'dataset',
+        'title': 'title',
+        'venue': 'venue',
+        'year': 'year'
+    }
 )
-src2 = st.new_data_source(path="edges.csv")
-src2.add_edge_mapping(
-    schema.edge['IsSameAs'].create_mapping(
-        src="Source",
-        dst="Target"
-    )
+
+selfauth_edges = schema.edge['SharesAuthor'].create_map(
+    path='papers.csv',
+    src='Id',
+    dst='Id',
+    map_attributes={
+        'author': 'Id'
+    }
 )
-data_sources = [src1, src2]
 
-# ingestor
-graph_ingest = ss.ingest(schema=schema, sources=data_sources, label='imdb')
-# task_ingest = ss.ingest_start(schema=schema, sources=data_sources)
-# graph_ingest = ss.ingest(payload=jsonPayload)
+auth_edges = schema.edge['SharesAuthor'].create_map(
+    path='authors.csv',
+    src='Source',
+    dst='Target',
+    map_attributes={
+        'author': 'Author'
+    }
+)
 
-# entity resolution
-graph_er = ss.er(graph=graph_ingest, label='imdb_er')
+mappings = [paper_nodes, selfauth_edges, auth_edges]
 
-# node embedder
-# TODO
-# df = ss.embedder(graph=graph_er)
+"""Ingestor"""
+graph_ingest = ss.ingest(schema=schema, mappings=mappings, label='papers')
 
-# node attr inference
-graph_nai = ss.nai(graph=graph_er, params={}, label='imdb_nai')
+"""Entity Resolution"""
+graph_er = ss.entity_resolution(graph=graph_ingest, resolver=st.entity.EntityResolution())
 
-# graph to networkx
-# TODO
-# graph_nx = ss.to_networkx(graph_nai)
+"""Node Attribute Inference"""
+graph_nai = ss.predict(
+    graph=graph_er,
+    model=st.model.Node2Vec(),
+    target_attribute='venue',
+    node_type='Paper',
+    attributes_to_ignore=['__id', 'title', 'dataset']
+)
 
+"""Load graph with networkx"""
+graph_nx = graph_nai.to_networkx()
+
+"""Write graph in GraphML format"""
+nx.write_graphml(nx.DiGraph(graph_nx), "papers.graphml")
