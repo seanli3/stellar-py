@@ -83,6 +83,11 @@ class StellarGraph:
         return g
 
     def to_graphml(self, filepath: str) -> bool:
+        """Write graph out to graphml format
+
+        :param filepath:    output path
+        :return:            success?
+        """
         try:
             nx.write_graphml(nx.DiGraph(self.to_networkx()), filepath)
             return True
