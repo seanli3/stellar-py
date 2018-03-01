@@ -3,7 +3,7 @@ import networkx as nx
 
 
 """Create session"""
-ss = st.create_session(url="http://localhost:3000")
+ss = st.create_session(url="http://localhost:8000")
 
 """Create graph schema"""
 schema = st.create_schema()
