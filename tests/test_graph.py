@@ -78,3 +78,10 @@ def test_to_networkx_with_label():
     assert graph.number_of_edges() == 11
     assert sum(attr['my_label'] == 'Location' for _, attr in graph.nodes(data=True)) == 2
     assert sum(attr['my_label'] == 'born-in' for _, _, attr in graph.edges(data=True)) == 2
+
+
+def test_to_graphml(tmpdir):
+    graph = StellarGraph(EPGM_PATH, "")
+    path = tmpdir.dirpath('g.graphml')
+    assert graph.to_graphml(filepath=path)
+    assert not StellarGraph("", "").to_graphml(filepath=path)
