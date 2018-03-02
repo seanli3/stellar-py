@@ -38,10 +38,10 @@ class StellarResult:
     """Contains result information from a completed or failed task
 
         Attributes:
-            status (str):   'completed' | 'aborted'
-            success (bool): flag for success
-            dir (str):      path to graph
-            reason (str):   reason for failure
+            status (str):   'completed' | 'aborted' | 'failed'
+            success (bool): Flag for success
+            dir (str):      Path to result graph
+            reason (str):   Reason for failure
     """
     def __init__(self, status: str, payload: Dict[str, str]) -> None:
         """Initialise
@@ -92,12 +92,12 @@ class StellarTask:
     def check_status(self) -> str:
         """Check status of task
 
-        :return:    'init' | 'running' | 'completed' | 'aborted'
+        :return:    'init' | 'running' | 'completed' | 'aborted' | 'failed'
         """
         return json.loads(self._r.get(self._session_id))['status']
 
     def is_done(self) -> bool:
-        """Check if task is completed or aborted
+        """Check if task is completed or aborted/failed
 
         :return: true if done
         """
@@ -105,10 +105,10 @@ class StellarTask:
         return (self._STATUS_COMPLETE in status) or (self._STATUS_ABORT in status) or (self._STATUS_FAIL in status)
 
     def wait_for_result(self, timeout: float = 0) -> StellarResult:
-        """Poll status until result is available then create result
+        """Wait until result is available
 
-        :param timeout:     polling timeout in seconds. Set to zero to poll forever
-        :return:    StellarResult
+        :param timeout:     polling timeout in seconds. Defaulted to zero to poll forever
+        :return:    StellarResult object
         """
         if timeout <= 0:
             polling.poll(self.is_done, step=1, poll_forever=True)
@@ -131,8 +131,9 @@ class StellarSession:
         """Create a Stellar Session Object
 
         :param url:         Stellar Coordinator URL
-        :param redis_url:   Redis Server URL
-        :param redis_port:  Redis Server Port
+        :param port:        Stellar Coordinator Port
+        :param redis_url:   Redis Server URL. Defaulted to same URL as Coordinator
+        :param redis_port:  Redis Server Port. Defaulted to 6379
         """
         self._url = "http://{}:{}".format(url, port)
         self._redis_url = redis_url or url
@@ -196,24 +197,24 @@ class StellarSession:
 
     def ingest_start(self, schema: GraphSchema, mappings: List[Union[NodeMapping, EdgeMapping]],
                      label: str) -> StellarTask:
-        """Start an ingestion session
+        """Trigger an ingestion session.
 
         :param schema:      Graph schema
         :param mappings:    List of data-source mappings
         :param label:       Label to be assigned to output graph
-        :return:            StellarTask
+        :return:            StellarTask object
         """
         return self._start(self._TASK_INGEST, lambda sid: StellarIngestPayload(sid, schema, mappings, label))
 
     def ingest(self, schema: GraphSchema, mappings: List[Union[NodeMapping, EdgeMapping]], label: str = 'ingest',
                timeout: float = 0) -> StellarGraph:
-        """Start and wait for an ingestion session to produce graph
+        """Ingest from a data source to create a graph.
 
         :param schema:      Graph schema
         :param mappings:    List of data-source mappings
         :param label:       Label to be assigned to output graph
-        :param timeout:     Timeout in seconds. Set to zero to poll forever.
-        :return:            StellarGraph
+        :param timeout:     Timeout in seconds. Defaulted to zero to poll forever.
+        :return:            Output graph object
         """
         task = self.ingest_start(schema, mappings, label)
         res = task.wait_for_result(timeout)
@@ -224,13 +225,13 @@ class StellarSession:
 
     def er_start(self, graph: StellarGraph, resolver: StellarEntityResolver, attribute_thresholds: Dict[str, float],
                  label: str) -> StellarTask:
-        """Start an Entity Resolution session
+        """Trigger an Entity Resolution session
 
-        :param graph:       Input StellarGraph object
+        :param graph:       Input graph object
         :param resolver:    Entity Resolution technique to use
-        :param attribute_thresholds:      thresholds for each attribute as a dict - normalised between 0 and 1
+        :param attribute_thresholds:      Thresholds for each attribute as a dict - normalised between 0 and 1
         :param label:       Label to be assigned to output graph
-        :return:            StellarTask
+        :return:            StellarTask object
         """
         return self._start(self._TASK_ER,
                            lambda sid: StellarERPayload(sid, graph, resolver, attribute_thresholds, label))
@@ -244,27 +245,29 @@ class StellarSession:
         :param resolver:    Entity Resolution technique to use
         :param attribute_thresholds:      thresholds for each attribute as a dict - normalised between 0 and 1
         :param label:       Label to be assigned to output graph
-        :param timeout:     Timeout in seconds. Set to zero to poll forever.
-        :return:            StellarGraph with entities resolved
+        :param timeout:     Timeout in seconds. Defaulted to zero to poll forever.
+        :return:            Output graph object with resolved entities
         """
         task = self.er_start(graph, resolver, attribute_thresholds or {}, label)
         res = task.wait_for_result(timeout)
         if res.success:
-            return StellarGraph(res.dir, label)
+            print("WARNING: Current version does not allow Entity Resolution to update its graph label. "
+                  "Keeping original label: {}".format(graph.label))
+            return StellarGraph(res.dir, graph.label)  # ER uses same label instead of creating new graph
         else:
             raise SessionError(500, res.reason)
 
     def nai_start(self, graph: StellarGraph, model: StellarMLModel, target_attribute: str, node_type: str,
                   attributes_to_ignore: List[str], label: str) -> StellarTask:
-        """Start an Node Attribute Inference session
+        """Trigger a Node Attribute Inference session
 
-        :param graph:                   Input StellarGraph object
-        :param model:                   Machine Learning model with pipeline config
-        :param target_attribute         Attribute to infer
-        :param node_type                Type of node to infer attributes on
-        :param attributes_to_ignore     Attributes to ignore
+        :param graph:                   Input graph object
+        :param model:                   Machine Learning model object
+        :param target_attribute:        Attribute to infer
+        :param node_type:               Type of node to infer attributes on
+        :param attributes_to_ignore:    List of attributes to ignore
         :param label:                   Label to be assigned to output graph
-        :return:                        StellarTask
+        :return:                        StellarTask object
         """
         return self._start(self._TASK_NAI, lambda sid: StellarNAIPayload(sid, graph, model, target_attribute, node_type,
                                                                          attributes_to_ignore, label))
@@ -274,14 +277,14 @@ class StellarSession:
                 timeout: float = 0) -> StellarGraph:
         """Predict attributes on graph elements
 
-        :param graph:                   Input StellarGraph object
-        :param model:                   Machine Learning model to use
-        :param target_attribute         Attribute to infer
-        :param node_type                Type of node to infer attributes on
-        :param attributes_to_ignore     Attributes to ignore
+        :param graph:   Input graph object
+        :param model:   Machine Learning model object
+        :param target_attribute:    Attribute to infer
+        :param node_type:           Type of node to infer attributes on
+        :param attributes_to_ignore:    List of attributes to ignore
         :param label:                   Label to be assigned to output graph
-        :param timeout:                 Timeout in seconds. Set to zero to poll forever.
-        :return:                        StellarGraph with predicted attributes
+        :param timeout:                 Timeout in seconds. Defaulted to zero to poll forever.
+        :return:                        Output graph object with predicted attributes
         """
         task = self.nai_start(graph, model, target_attribute, node_type, attributes_to_ignore or [], label)
         res = task.wait_for_result(timeout)
@@ -297,8 +300,8 @@ def create_session(url: str, port: int = 8000) -> StellarSession:
     """Create a new Stellar Session
 
     :param url:     Stellar Coordinator URL
-    :param port:    Stellar Coordinator Port
-    :return:        new session
+    :param port:    Stellar Coordinator Port. Defaulted to 8000
+    :return:        New session object
     """
     m = re.match("([a-zA-Z]+://)?([-a-zA-Z0-9@%_+.]+)(:[0-9]{1,4})?", url)
     return StellarSession(m.group(2), port if not m.group(3) else int(m.group(3)[1:]))
