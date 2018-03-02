@@ -258,13 +258,13 @@ class StellarSession:
                   attributes_to_ignore: List[str], label: str) -> StellarTask:
         """Start an Node Attribute Inference session
 
-        :param graph:               Input StellarGraph object
-        :param model:               Machine Learning model with pipeline config
-        :param target_attribute     Attribute to infer
-        :param node_type            Type of node to infer attributes on
-        :param attributes_to_ignore Attributes to ignore
-        :param label:               Label to be assigned to output graph
-        :return:                    StellarTask
+        :param graph:                   Input StellarGraph object
+        :param model:                   Machine Learning model with pipeline config
+        :param target_attribute         Attribute to infer
+        :param node_type                Type of node to infer attributes on
+        :param attributes_to_ignore     Attributes to ignore
+        :param label:                   Label to be assigned to output graph
+        :return:                        StellarTask
         """
         return self._start(self._TASK_NAI, lambda sid: StellarNAIPayload(sid, graph, model, target_attribute, node_type,
                                                                          attributes_to_ignore, label))
@@ -274,14 +274,14 @@ class StellarSession:
                 timeout: float = 0) -> StellarGraph:
         """Predict attributes on graph elements
 
-        :param graph:               Input StellarGraph object
-        :param model:               Machine Learning model to use
-        :param target_attribute     Attribute to infer
-        :param node_type            Type of node to infer attributes on
-        :param attributes_to_ignore Attributes to ignore
-        :param label:               Label to be assigned to output graph
-        :param timeout:             Timeout in seconds. Set to zero to poll forever.
-        :return:                    StellarGraph with predicted attributes
+        :param graph:                   Input StellarGraph object
+        :param model:                   Machine Learning model to use
+        :param target_attribute         Attribute to infer
+        :param node_type                Type of node to infer attributes on
+        :param attributes_to_ignore     Attributes to ignore
+        :param label:                   Label to be assigned to output graph
+        :param timeout:                 Timeout in seconds. Set to zero to poll forever.
+        :return:                        StellarGraph with predicted attributes
         """
         task = self.nai_start(graph, model, target_attribute, node_type, attributes_to_ignore or [], label)
         res = task.wait_for_result(timeout)
