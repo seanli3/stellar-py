@@ -11,7 +11,7 @@ Creating and setting up an environment to use `stellar-py` using Anaconda:
 1. Download and install Anaconda 3 from <http://continuum.io>
 2. Create a Conda environment. The following command creates an environment called `stellar` and installs `pip`.
     ```
-    conda create -name stellar pip
+    conda create --name stellar pip
     ```
 3. Activate the new environment.
     ```
