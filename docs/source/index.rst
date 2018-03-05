@@ -3,10 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to stellar-py's documentation!
-**************************************
+Welcome to Stellar Python Client
+********************************
 
-Description of project
+Welcome to Stellar Python Client's documentation. If you're new, you can head over to :doc:`installation` to setup your
+environment, and then to :doc:`quickstart` for a quick tutorial on how to create a graph from our example dataset and
+start using other tools within Stellar. For a more in-depth look into the module, check out the API references.
 
 User Guide
 ==========

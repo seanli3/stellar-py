@@ -1,6 +1,5 @@
 Graph Object
 ************
 
-.. automodule:: stellar.graph
-.. autoclass:: StellarGraph
+.. autoclass:: stellar.graph.StellarGraph
     :members:

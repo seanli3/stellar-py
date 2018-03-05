@@ -1,7 +1,6 @@
 Session Object
 **************
 
-.. automodule:: stellar.session
-.. autofunction:: create_session
-.. autoclass:: StellarSession
+.. autofunction:: stellar.create_session
+.. autoclass:: stellar.session.StellarSession
     :members:
