@@ -7,12 +7,12 @@ Requirements
 Environment Setup
 -----------------
 Ensure you have completed the procedure in :doc:`installation` to have your python environment set up correctly.
-Refer to [somewhere] to setup all other Stellar modules.
+Refer to the main `Stellar repository <https://github.com/data61/stellar>`_ to setup all other Stellar modules.
 
 Example Dataset
 ---------------
-Download the example dataset to use with this guide: [papers.csv, authors.csv].
-Place them in a directory that can be read by the python client.
+Your Stellar installation should come with an example dataset - `names.csv` and `associations.csv`
+By default, they should be found in ``/opt/stellar/data``.
 
 Jupyter Notebook
 ----------------
@@ -53,21 +53,17 @@ The syntax is as follows::
 
     schema = st.create_schema()
     schema.add_node_type(
-        name='Paper',
+        name='Person',
         attribute_types={
-            'dataset': 'string',
-            'title': 'string',
-            'venue': 'string',
-            'year': 'integer'
+            'full_name': 'string',
+            'address': 'string',
+            'risk': 'string'
         }
     )
     schema.add_edge_type(
-        name='SharesAuthor',
-        src_type='Paper',
-        dst_type='Paper',
-        attribute_types={
-            'author': 'string'
-        }
+        name='Association',
+        src_type='Person',
+        dst_type='Person'
     )
 
 Mappings
@@ -75,35 +71,32 @@ Mappings
 Mappings are used to define how column names of a csv data source correspond to attributes of the graph's nodes and
 edges. The schema we defined earlier contains a dictionary of the different types of nodes and edges we created.
 Each of them contain a method ``create_map``, which can be used to create a mapping for that particular node/edge type.
-We can map column names in our dataset to our ``Paper`` node and ``SharesAuthor`` edge using the syntax below::
+We can map column names in our dataset to our `Person` node and `Association` edge using the syntax below::
 
-    m_papers = schema.node['Paper'].create_map(
-        path='/tmp/stellar/user/papers.csv',
+    m_person = schema.node['Person'].create_map(
+        path='/opt/stellar/data/names.csv',
         column='ID',
         map_attributes={
-            'dataset': 'DATASET',
-            'title': 'TITLE',
-            'venue': 'VENUE',
-            'year': 'YEAR'
+            'full_name': 'FULLNAME',
+            'address': 'ADDR',
+            'risk': 'RISK'
         }
     )
-    m_auth = schema.edge['SharesAuthor'].create_map(
-        path='/tmp/stellar/user/authors.csv',
+    m_assoc = schema.edge['Association'].create_map(
+        path='/opt/stellar/data/associations.csv',
         src='SRC',
-        dst='DST',
-        map_attributes={
-            'author': 'NAME'
-        }
+        dst='DST'
     )
 
 Ingestion
 =========
 Use the schema and list of mappings we've created to create a graph. The label is a string to identify the graph::
 
-    graph = ss.ingest(schema=schema, mappings=[m_papers, m_auth], label='papers')
+    graph = ss.ingest(schema=schema, mappings=[m_person, m_assoc], label='risk_net')
 
 Once you have a graph, you can use this graph object as input to other functions such as Entity Resolution and Node
 Attribute Inference.
+
 Entity Resolution
 =================
 Currently there is one fixed configuration for running the entity resolution module, which can be obtained through
@@ -120,12 +113,12 @@ to specify which target attribute to predict, which node type to use, and which 
     graph_predicted = ss.predict(
         graph=graph,
         model=st.model.Node2Vec(),
-        target_attribute='venue',
-        node_type='Paper',
+        target_attribute='risk',
+        node_type='Person',
         attributes_to_ignore=[
             '__id',
-            'dataset',
-            'title'
+            'full_name',
+            'address'
         ]
     )
 
@@ -134,7 +127,7 @@ Write to GraphML
 GraphML is a popular XML based file format for storing graphs, which is often supported by other applications,
 e.g. Gephi - a graph visualisation tool.::
 
-    graph.to_graphml(path='/tmp/stellar/user/mygraph.graphml')
+    graph.to_graphml(path='/tmp/stellar/user/risk_net.graphml')
 
 Networkx
 ========
@@ -147,4 +140,4 @@ must either be omitted or you can use an optional parameter ``inc_type_as`` to i
 Complete Example
 ================
 
-.. literalinclude:: ../../examples/client_example.py
+.. literalinclude:: ../../examples/risk_net.py
