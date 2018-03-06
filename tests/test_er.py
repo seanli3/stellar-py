@@ -44,7 +44,7 @@ def test_er(monkeypatch):
     ss = st.create_session(url=stellar_addr)
     graph = ss.entity_resolution(StellarGraph('graph.epgm', 'test_er_ori'), EntityResolution(), label='test_er')
     assert graph.path == "test_path.epgm"
-    assert graph.label == 'test_er'
+    assert graph.label == 'test_er_ori'  # label unchanged
 
 
 @httpretty.activate

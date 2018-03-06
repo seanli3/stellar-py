@@ -73,7 +73,7 @@ class StellarGraph:
     def to_networkx(self, inc_type_as: Optional[str] = None) -> nx.MultiDiGraph:
         """Load graph with networkx
 
-        :param inc_type_as:    include label as an attribute
+        :param inc_type_as:     Specify name of "type" attribute to include it as an attribute
         :return:                networkx MultiDiGraph
         """
         graph_dict = self._load_graph(meta_keys={inc_type_as: 'label'}) if inc_type_as else self._load_graph()
@@ -83,10 +83,10 @@ class StellarGraph:
         return g
 
     def to_graphml(self, filepath: str) -> bool:
-        """Write graph out to graphml format
+        """Write graph out to GraphML format
 
-        :param filepath:    output path
-        :return:            success?
+        :param filepath:    Output path
+        :return:            True if successful
         """
         try:
             nx.write_graphml(nx.DiGraph(self.to_networkx()), filepath)
