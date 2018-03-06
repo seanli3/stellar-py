@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'stellar-py'
-copyright = '2018, Kevin Jung'
+copyright = '2018, CSIRO Data61'
 author = 'Kevin Jung'
 
 # The short X.Y version
