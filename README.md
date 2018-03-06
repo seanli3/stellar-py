@@ -58,3 +58,6 @@ graph = ss.ingest(schema=schema, mappings=[node_map], label='people')
 
 ## Other examples
 Examples can be found [here](examples)
+
+## Additional Documentation
+Visit <https://data61.github.io/stellar-py> for a more in-depth guide and API references.
