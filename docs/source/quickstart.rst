@@ -11,8 +11,9 @@ Refer to the main `Stellar repository <https://github.com/data61/stellar>`_ to s
 
 Example Dataset
 ---------------
-Your Stellar installation should come with an example dataset - `names.csv` and `associations.csv`
-By default, they should be found in ``/opt/stellar/data``.
+With the recommended installation and setup, datasets should be placed in the directory "/opt/stellar/data".
+Your Stellar installation should come with an example dataset called `risk_net` which contains two CSV data sources -
+"risk_net/names.csv" and "risk_net/associations.csv".
 
 Jupyter Notebook
 ----------------
@@ -74,7 +75,7 @@ Each of them contain a method ``create_map``, which can be used to create a mapp
 We can map column names in our dataset to our `Person` node and `Association` edge using the syntax below::
 
     m_person = schema.node['Person'].create_map(
-        path='/opt/stellar/data/names.csv',
+        path='risk_net/names.csv',
         column='ID',
         map_attributes={
             'full_name': 'FULLNAME',
@@ -83,7 +84,7 @@ We can map column names in our dataset to our `Person` node and `Association` ed
         }
     )
     m_assoc = schema.edge['Association'].create_map(
-        path='/opt/stellar/data/associations.csv',
+        path='risk_net/associations.csv',
         src='SRC',
         dst='DST'
     )
@@ -127,7 +128,7 @@ Write to GraphML
 GraphML is a popular XML based file format for storing graphs, which is often supported by other applications,
 e.g. Gephi - a graph visualisation tool.::
 
-    graph.to_graphml(path='/tmp/stellar/user/risk_net.graphml')
+    graph.to_graphml(path='/opt/stellar/data/risk_net/risk_net.graphml')
 
 Networkx
 ========

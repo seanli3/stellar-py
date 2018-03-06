@@ -23,7 +23,7 @@ schema.add_edge_type(
 
 """Create data source mappings"""
 m_person = schema.node['Person'].create_map(
-    path='/opt/stellar/risk_net/names.csv',
+    path='risk_net/names.csv',
     column='ID',
     map_attributes={
         'full_name': 'FULLNAME',
@@ -33,7 +33,7 @@ m_person = schema.node['Person'].create_map(
 )
 
 m_assoc = schema.edge['Association'].create_map(
-    path='/opt/stellar/risk_net/associations.csv',
+    path='risk_net/associations.csv',
     src='SRC',
     dst='DST'
 )
