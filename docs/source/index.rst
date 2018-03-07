@@ -20,7 +20,7 @@ User Guide
 
    installation
    quickstart
-   errors
+   modules
 
 API Reference
 =============
