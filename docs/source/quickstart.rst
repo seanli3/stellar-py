@@ -13,7 +13,7 @@ Example Dataset
 ---------------
 With the recommended installation and setup, datasets should be placed in the directory "/opt/stellar/data".
 Your Stellar installation should come with an example dataset called `risk_net` which contains two CSV data sources -
-"risk_net/names.csv" and "risk_net/associations.csv".
+"risk_net/risk_net_names.csv" and "risk_net/risk_net_associations.csv".
 
 Jupyter Notebook
 ----------------
@@ -75,18 +75,18 @@ Each of them contain a method ``create_map``, which can be used to create a mapp
 We can map column names in our dataset to our `Person` node and `Association` edge using the syntax below::
 
     m_person = schema.node['Person'].create_map(
-        path='risk_net/names.csv',
-        column='ID',
+        path='risk_net/risk_net_names.csv',
+        column='id',
         map_attributes={
-            'full_name': 'FULLNAME',
-            'address': 'ADDR',
-            'risk': 'RISK'
+            'full_name': 'name',
+            'address': 'address',
+            'risk': 'risk'
         }
     )
     m_assoc = schema.edge['Association'].create_map(
-        path='risk_net/associations.csv',
-        src='SRC',
-        dst='DST'
+        path='risk_net/risk_net_associations.csv',
+        src='person1',
+        dst='person2'
     )
 
 Ingestion

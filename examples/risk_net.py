@@ -23,19 +23,19 @@ schema.add_edge_type(
 
 """Create data source mappings"""
 m_person = schema.node['Person'].create_map(
-    path='risk_net/names.csv',
-    column='ID',
+    path='/opt/stellar/data/risk_net/risk_net_names.csv',
+    column='id',
     map_attributes={
-        'full_name': 'FULLNAME',
-        'address': 'ADDR',
-        'risk': 'RISK',
+        'full_name': 'name',
+        'address': 'address',
+        'risk': 'risk',
     }
 )
 
 m_assoc = schema.edge['Association'].create_map(
-    path='risk_net/associations.csv',
-    src='SRC',
-    dst='DST'
+    path='/opt/stellar/data/risk_net/risk_net_associations.csv',
+    src='person1',
+    dst='person2'
 )
 
 mappings = [m_person, m_assoc]
@@ -59,4 +59,4 @@ graph_nai = ss.predict(
 graph_nx = graph_nai.to_networkx()
 
 """Write graph in GraphML format"""
-nx.write_graphml(nx.DiGraph(graph_nx), "risk_net.graphml")
+nx.write_graphml(nx.DiGraph(graph_nx), "/opt/stellar/data/risk_net/risk_net.graphml")
