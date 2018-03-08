@@ -2,7 +2,7 @@ from setuptools import setup
 from setuptools import find_packages
 
 setup(name='stellar-py',
-      version='0.2.0',
+      version='0.3.0b',
       description='Python client for the Stellar project',
       url='serene.sh',
       author='Kevin Jung',
