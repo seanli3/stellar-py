@@ -1,0 +1,43 @@
+language: python
+
+python:
+  - "3.6"
+  - "nightly"
+
+env:
+  global:
+    - STELLAR_PY_VERSION: $(python setup.py --version)
+
+install:
+  - pip install .[testing]
+script:
+  - coverage run --source=stellar setup.py test
+after_success:
+  - coveralls
+
+jobs:
+  include:
+    - stage: publish
+      python: "3.6"
+      if: branch = devel OR branch =~ ^develmock/
+      script:
+      - echo "Attempting to publish snapshot version docker image [$STELLAR_PY_VERSION]";
+      - if [[ $STELLAR_PY_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+b[0]?$ ]] ; then
+          echo "Publishing snapshot docker image version $STELLAR_PY_VERSION";
+          ./docker/dockerize.sh;
+        else
+          echo "CONFLICT publishing snapshot docker image version [$STELLAR_PY_VERSION]";
+          exit 1;
+        fi
+    - stage: release
+      python: "3.6"
+      if: branch = master OR branch =~ ^mastermock/
+      script:
+      - echo "Attempting to publish release version docker image [$STELLAR_PY_VERSION]"
+      - if [[ $STELLAR_PY_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
+          echo "Publishing release docker image version $STELLAR_PY_VERSION";
+          ./docker/dockerize.sh;
+        else
+          echo "CONFLICT publishing release docker image version [$STELLAR_PY_VERSION]";
+          exit 1;
+        fi
