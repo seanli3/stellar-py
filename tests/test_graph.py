@@ -84,4 +84,5 @@ def test_to_graphml(tmpdir):
     graph = StellarGraph(EPGM_PATH, "")
     path = tmpdir.dirpath('g.graphml')
     assert graph.to_graphml(filepath=path)
+    assert graph.to_graphml(filepath=path, inc_type_as='type')
     assert not StellarGraph("", "").to_graphml(filepath=path)
