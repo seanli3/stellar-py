@@ -11,32 +11,24 @@ environment, and then to :doc:`quickstart` for a quick tutorial on how to create
 start using other tools within Stellar. For a more in-depth look into the module, check out the API references and our
 `GitHub repository <https://github.com/data61/stellar-py>`_.
 
-User Guide
-==========
-
 .. toctree::
    :maxdepth: 2
-   :caption: Step-by-step instructions on how to get started:
+   :caption: User Guide
 
    installation
    quickstart
    modules
 
-API Reference
-=============
-
 .. toctree::
    :maxdepth: 2
-   :caption: Information on specific functions, classes
+   :caption: API Reference
 
    session
    graph
 
-Additional Notes
-================
-
 .. toctree::
    :maxdepth: 2
+   :caption: Additional Notes
 
    changelog
    license
