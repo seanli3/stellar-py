@@ -3,12 +3,27 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Stellar Python Client
-********************************
+Stellar Python Client
+*********************
 
-Welcome to Stellar Python Client's documentation. If you're new, you can head over to :doc:`installation` to setup your
-environment, and then to :doc:`quickstart` for a quick tutorial on how to create a graph from our example dataset and
-start using other tools within Stellar. For a more in-depth look into the module, check out the API references and our
+Welcome to Stellar Python Client's documentation, the Python Client for the
+`Stellar Graph Analytics <https://github.com/data61/stellar>`_ platform developed by
+`CSIRO Data61 <https://data61.csiro.au>`_.
+
+The Stellar Python Client can perform the following functions:
+
+* Connect to the main Stellar platform
+* Ingest data from a CSV into a graph format
+* Perform entity resolution the graph
+* Run a machine learning model to predict node attributes
+* Convert a graph into a networkx object
+
+If you are interested in running the entire Stellar platform, please refer to the instructions on the main Stellar
+`repository <https://github.com/data61/stellar>`_.
+
+Once you have your Stellar platform up and running, refer to :doc:`installation` to setup your environment for the
+Python client, and then to :doc:`quickstart` for a quick tutorial on how to create and analyse a graph using the
+example dataset. For a more in-depth look into the library, please refer to the API references and the official
 `GitHub repository <https://github.com/data61/stellar-py>`_.
 
 .. toctree::
