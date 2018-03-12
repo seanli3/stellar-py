@@ -1,10 +1,22 @@
-# stellar-py 
-Python client for the Stellar Project
+# stellar-py
 
 |Branch|Build|Coverage|
 |:-----|:----:|:----:|
 |*master*|[![Build Status](https://travis-ci.org/data61/stellar-py.svg?branch=master)](https://travis-ci.org/data61/stellar-py)|[![Coverage Status](https://coveralls.io/repos/github/data61/stellar-py/badge.svg?branch=master)](https://coveralls.io/github/data61/stellar-py?branch=master)|
 |*devel*|[![Build Status](https://travis-ci.org/data61/stellar-py.svg?branch=devel)](https://travis-ci.org/data61/stellar-py)|[![Coverage Status](https://coveralls.io/repos/github/data61/stellar-py/badge.svg?branch=devel)](https://coveralls.io/github/data61/stellar-py?branch=devel)|
+
+## Introduction
+
+This repository hosts stellar-py, the Python Client for the [Stellar Graph Analytics](https://github.com/data61/stellar) platform developed by [CSIRO Data61](https://data61.csiro.au).
+
+The Stellar Python Client can perform the following functions:
+ * Connect to the main Stellar platform
+ * Ingest data from a CSV into a graph format
+ * Perform entity resolution on the graph
+ * Run a machine learning model to predict node attributes
+ * Convert a graph into a networkx object
+
+If you are interested in running the entire Stellar platform, please refer to the instructions on the main Stellar [repository](https://github.com/data61/stellar).
 
 ## Requirements
 Creating and setting up an environment to use `stellar-py` using Anaconda:
