@@ -15,6 +15,7 @@ Requirements
 
 Additional Info / Limitations
 -----------------------------
+* Current version of Stellar supports up to 50,000 nodes to be ingested.
 * Failing to provide a correct path to an existing file source may sometimes result in the Python client hanging
   without a response.
 * Including non-existing column names in the mappings will not produce errors in the ingestion, but will produce a
@@ -28,6 +29,8 @@ Configurations
 --------------
 * Currently there is one fixed set of configurations for Entity Resolution. Use an instance of
   ``stellar.entity.EntityResolution`` as the resolver when running the module.
+
+.. _ml-models:
 
 Machine Learning Models
 =======================
