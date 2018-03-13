@@ -1,9 +1,9 @@
 # stellar-py
 
-|Branch|Build|Coverage|
-|:-----|:----:|:----:|
-|*master*|[![Build Status](https://travis-ci.org/data61/stellar-py.svg?branch=master)](https://travis-ci.org/data61/stellar-py)|[![Coverage Status](https://coveralls.io/repos/github/data61/stellar-py/badge.svg?branch=master)](https://coveralls.io/github/data61/stellar-py?branch=master)|
-|*devel*|[![Build Status](https://travis-ci.org/data61/stellar-py.svg?branch=devel)](https://travis-ci.org/data61/stellar-py)|[![Coverage Status](https://coveralls.io/repos/github/data61/stellar-py/badge.svg?branch=devel)](https://coveralls.io/github/data61/stellar-py?branch=devel)|
+|Branch|Build|Coverage|Docs|
+|:-----|:----:|:----:|:----:|
+|*master*|[![Build Status](https://travis-ci.org/data61/stellar-py.svg?branch=master)](https://travis-ci.org/data61/stellar-py)|[![Coverage Status](https://coveralls.io/repos/github/data61/stellar-py/badge.svg?branch=master)](https://coveralls.io/github/data61/stellar-py?branch=master)|[![Documentation Status](https://readthedocs.org/projects/stellar-py/badge/?version=stable)](http://stellar-py.readthedocs.io/en/stable/?badge=stable)|
+|*devel*|[![Build Status](https://travis-ci.org/data61/stellar-py.svg?branch=devel)](https://travis-ci.org/data61/stellar-py)|[![Coverage Status](https://coveralls.io/repos/github/data61/stellar-py/badge.svg?branch=devel)](https://coveralls.io/github/data61/stellar-py?branch=devel)|[![Documentation Status](https://readthedocs.org/projects/stellar-py/badge/?version=latest)](http://stellar-py.readthedocs.io/en/latest/?badge=latest)|
 
 ## Introduction
 
