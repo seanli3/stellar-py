@@ -46,10 +46,17 @@ Additional configurations specific to each plugin within the pipeline may become
 
 Additional Info / Limitations
 -----------------------------
-* For any of the `Node2Vec` pipeline configurations, every node in the input graph must contain at least one outgoing
-  edge. One possible approach to ensure this condition will always be satisfied, is to add a self-loop edge for every
-  node when you initially create the graph.
-* If the graph contains too few nodes/edges, the default configurations included with the installation may not work.
-* The input graph must be homogeneous.
+
+* The target node attribute to be predicted can be of any type, but is treated as categorical with the number of
+  unique values defining the number of classes. The resulting predictive model for the target attribute is a classifier.
+* Node attributes to be used as predictors for the target node attribute must be numeric (int or float) or convertible
+  to numeric (strings like "0", "1", "3.14", etc.), otherwise they must be added to the list of attributes to ignore.
+  See the documentation on the NAI plugin on how to specify node attributes to ignore.
+* Predictors must have no missing values. The target node attribute to predict, on the other hand, can have missing
+  values in the input data.
+* The input dataset should include positive examples (support) for each class label of the target attribute.
+* All NAI pipelines support homogeneous graph input (the graph only has a single node and edge type). A NAI pipeline
+  using representation learning via node2vec does support heterogeneous graph as input as well, as long as the node
+  type of interest (the type of nodes whose attributes are to be predicted) is explicitly specified by the user.
 
 

@@ -103,14 +103,14 @@ Entity Resolution
 Currently there is one fixed configuration for running the entity resolution module, which can be obtained through
 creating an instance of the class ``stellar.entity.EntityResolution``::
 
-    graph_resolved = ss.entity_resolution(graph=graph, resolver=st.model.EntityResolution())
+    graph_resolved = ss.entity_resolution(graph=graph, resolver=st.entity.EntityResolution())
 
 Node Attribute Inference
 ========================
 There are three pipeline configurations you can use for predicting node attributes. The basic configuration is used by
 the model ``stellar.model.Node2Vec``. More information about the different pipelines can be found
-`here <https://data61.github.io/stellar-evaluation-plugins/html/index.html>`_. You also need to specify which target
-attribute to predict, which node type to use, and which attributes to ignore.::
+:doc:`modules`. You also need to specify which target attribute to predict, which node type to use, and which
+attributes to ignore.::
 
     graph_predicted = ss.predict(
         graph=graph,
