@@ -38,6 +38,9 @@ Activate the new virtual environment::
 Installing stellar-py
 =====================
 
+Online Installation
+-------------------
+
 Make sure you have a python virtual environment activated - the name of your virtual environment should be visible on the prompt of your shell. Then you can install stellar-py with git.::
 
     sudo apt-get install git
@@ -46,4 +49,11 @@ Make sure you have a python virtual environment activated - the name of your vir
 If you want to download a particular branch from the repository, you can specify the name of this branch.::
 
     pip install git+git://github.com/data61/stellar-py@devel
+
+Offline Installation
+--------------------
+
+If you have a directory with all required packages, you can install them using pip::
+
+    pip install --no-index --find-links=path/to/packages stellar-py
 

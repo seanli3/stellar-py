@@ -15,6 +15,9 @@ With the recommended installation and setup, datasets should be placed in the di
 Your Stellar installation should come with an example dataset called `risk_net` which contains two CSV data sources -
 "risk_net/risk_net_names.csv" and "risk_net/risk_net_associations.csv".
 
+With the current version of Stellar, certain functionality may be limited when using a custom dataset. Stellar's
+ingestion module currently supports graphs containing up to 50,000 nodes.
+
 Jupyter Notebook
 ----------------
 Running the examples in this guide will most likely be easiest using a Jupyter Notebook.
@@ -35,7 +38,7 @@ You can fire up a notebook using the command::
 Create Session
 ==============
 
-Import the module and create a session pointing to localhost at port 8000.::
+Import the module and create a session pointing to localhost at port 8000::
 
     import stellar as st
 
@@ -100,16 +103,24 @@ Attribute Inference.
 
 Entity Resolution
 =================
+The Stellar platform allows you to find nodes that may be duplicates. This is done with graph based entity resolution,
+which results in new edges of type ‘duplicateOf’.
+
 Currently there is one fixed configuration for running the entity resolution module, which can be obtained through
 creating an instance of the class ``stellar.entity.EntityResolution``::
 
-    graph_resolved = ss.entity_resolution(graph=graph, resolver=st.model.EntityResolution())
+    graph_resolved = ss.entity_resolution(graph=graph, resolver=st.entity.EntityResolution())
 
-Node Attribute Inference
-========================
+Note: The Entity Resolution module is currently only configured for the risk_net dataset.
+
+Machine Learning on Graphs
+==========================
+The Stellar platform allows users to predict attributes on nodes using graph based machine learning techniques.
+
 There are three pipeline configurations you can use for predicting node attributes. The basic configuration is used by
-the model ``stellar.model.Node2Vec``. More information about the different pipelines can be found [here]. You also need
-to specify which target attribute to predict, which node type to use, and which attributes to ignore.::
+the model ``stellar.model.Node2Vec``. More information about the different pipelines can be found in
+:ref:`ml-models`. You also need to specify which target attribute to predict, which node type to use, and which
+attributes to ignore::
 
     graph_predicted = ss.predict(
         graph=graph,
@@ -123,18 +134,22 @@ to specify which target attribute to predict, which node type to use, and which 
         ]
     )
 
+Note: Assumptions and limitations of the machine learning module are described in :ref:`ml-models`.
+
 Write to GraphML
 ================
 GraphML is a popular XML based file format for storing graphs, which is often supported by other applications,
-e.g. Gephi - a graph visualisation tool.::
+e.g. Gephi - a graph visualisation tool::
 
     graph.to_graphml(path='/opt/stellar/data/risk_net/risk_net.graphml')
 
-Networkx
+NetworkX
 ========
-The graph object contains a method called ``to_networkx`` that can be used to load the graph as a
+To alter the graph on your local machine, the Stellar Python Client contains a NetworkX conversion module.
+
+The StellarGraph object contains a method called ``to_networkx`` that can be used to load the graph as a
 ``networkx.MultiDiGraph`` object. Since Networkx only supports homogeneous graphs, the `type` information of nodes/edges
-must either be omitted or you can use an optional parameter ``inc_type_as`` to include it as an additional attribute.::
+must either be omitted or you can use an optional parameter ``inc_type_as`` to include it as an additional attribute::
 
     nx_graph = graph.to_networkx(inc_type_as='_type')
 
