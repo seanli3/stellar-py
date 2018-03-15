@@ -45,7 +45,7 @@ class StellarNAIPayload(Payload):
             }
         }
         self.parameters = {
-            'convert_epgm': 'True',
+            'convert_epgm': model.params.get('convert_epgm', 'True'),
             'target_attribute': target_attribute,
             'node_type': node_type,
             'attributes_to_ignore': attributes_to_ignore
