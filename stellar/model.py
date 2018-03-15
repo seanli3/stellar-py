@@ -52,5 +52,5 @@ class GCN(StellarMLModel):
 
     """
     def __init__(self) -> None:
-        StellarMLModel.__init__(self, {'pipelineFilename': 'pipeline_gcn.json'})
+        StellarMLModel.__init__(self, {'pipelineFilename': 'pipeline_gcn.json', 'convert_epgm': 'False'})
 

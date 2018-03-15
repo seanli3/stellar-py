@@ -67,6 +67,9 @@ def test_nai_payload_models():
     assert basic.pipelineFilename == 'pipeline_basic.json'
     assert full.pipelineFilename == 'pipeline_full.json'
     assert gcn.pipelineFilename == 'pipeline_gcn.json'
+    assert basic.parameters['convert_epgm'] == 'True'
+    assert full.parameters['convert_epgm'] == 'True'
+    assert gcn.parameters['convert_epgm'] == 'False'
 
 
 @httpretty.activate
