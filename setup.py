@@ -23,7 +23,7 @@ from setuptools import setup
 from setuptools import find_packages
 
 setup(name='stellar-py',
-      version='0.2.1',
+      version='0.2.2',
       description='Python client for the Stellar project',
       url='https://github.com/data61/stellar-py',
       author='Kevin Jung',
